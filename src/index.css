@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@media (max-width: 640px) {
+  .field-map-canvas {
+    transform: rotate(90deg);
+    width: 50vh;
+    height: 30vh;
+  }
+}
