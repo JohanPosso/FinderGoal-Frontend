@@ -17,6 +17,7 @@ import {
   FiCalendar, // <--- Agregado
   FiMapPin, // <--- Agregado
   FiUsers, // <--- Agregado
+  FiAward, // <--- Agregado
 } from "react-icons/fi";
 import { FaFutbol } from "react-icons/fa"; // For general sports theme
 import api from "../utils/axios";
@@ -318,13 +319,15 @@ export default function ProfileDashboard() {
           <div className="flex items-center mb-6 md:mb-0">
             {userData?.avatar ? (
               <img
-                src={userData.avatar}
+                src={userData.avatar || "/icono-default.png"}
                 alt="Avatar"
                 className="w-24 h-24 rounded-full object-cover border-4 border-lime-500 mr-6"
               />
             ) : (
-              <FiUser
-                className={`text-7xl ${colorsSporty.accentLimeText} mr-6`}
+              <img
+                src="/icono-default.png"
+                alt="Avatar"
+                className="w-24 h-24 rounded-full object-cover border-4 border-lime-500 mr-6"
               />
             )}
             <div>
@@ -374,6 +377,42 @@ export default function ProfileDashboard() {
             </motion.button>
           </div>
         </motion.div>
+
+        {/* Estadísticas rápidas */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+          <div className="bg-gray-800 rounded-xl p-5 flex flex-col items-center border border-gray-700 shadow">
+            <FaFutbol className="text-3xl text-lime-400 mb-2" />
+            <span className="text-lg font-bold text-white">{userData?.partidosJugados || 0}</span>
+            <span className="text-xs text-gray-400">Jugados</span>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-5 flex flex-col items-center border border-gray-700 shadow">
+            <FiUsers className="text-3xl text-orange-400 mb-2" />
+            <span className="text-lg font-bold text-white">{userData?.partidosCreados || 0}</span>
+            <span className="text-xs text-gray-400">Creados</span>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-5 flex flex-col items-center border border-gray-700 shadow">
+            <FiAward className="text-3xl text-yellow-400 mb-2" />
+            <span className="text-lg font-bold text-white">{userData?.goles || 0}</span>
+            <span className="text-xs text-gray-400">Goles</span>
+          </div>
+          <div className="bg-gray-800 rounded-xl p-5 flex flex-col items-center border border-gray-700 shadow">
+            <FiAward className="text-3xl text-blue-400 mb-2" />
+            <span className="text-lg font-bold text-white">{userData?.asistencias || 0}</span>
+            <span className="text-xs text-gray-400">Asistencias</span>
+          </div>
+        </div>
+        {/* Sección de logros futuros */}
+        <div className="mb-10">
+          <h3 className="text-xl font-bold text-lime-400 mb-3 flex items-center gap-2">
+            <FiAward /> Logros y medallas (próximamente)
+          </h3>
+          <div className="flex gap-3 flex-wrap">
+            <span className="bg-gray-700 text-gray-400 px-4 py-2 rounded-full font-semibold text-sm shadow">Participante</span>
+            <span className="bg-gray-700 text-gray-400 px-4 py-2 rounded-full font-semibold text-sm shadow">Goleador</span>
+            <span className="bg-gray-700 text-gray-400 px-4 py-2 rounded-full font-semibold text-sm shadow">Asistente</span>
+            <span className="bg-gray-700 text-gray-400 px-4 py-2 rounded-full font-semibold text-sm shadow">Organizador</span>
+          </div>
+        </div>
 
         {/* Formulario de edición */}
         {editMode && (

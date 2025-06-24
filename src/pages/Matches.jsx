@@ -4,6 +4,7 @@ import { useStore } from "../store/useStore"; // Assuming this path is correct
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { FiCalendar, FiMapPin, FiUsers, FiPlus } from "react-icons/fi";
+import { FaFutbol } from "react-icons/fa";
 import { motion } from "framer-motion"; // For subtle animations
 import api from "../utils/axios";
 

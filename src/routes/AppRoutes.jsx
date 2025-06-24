@@ -9,6 +9,7 @@ import CreateMatch from "../pages/CreateMatch";
 import Profile from "../pages/Profile";
 import Dashboard from "../pages/Dashboard";
 import Field from "../pages/Field";
+import Community from "../pages/Community";
 
 // Aquí puedes agregar lógica de rutas protegidas si lo deseas
 
@@ -44,6 +45,7 @@ const AppRoutes = () => (
         </PrivateRoute>
       }
     />
+    <Route path="/community" element={<Community />} />
     <Route
       path="/profile"
       element={

@@ -14,6 +14,7 @@ import {
   FiAward,
   FiTarget,
   FiClock,
+  FiCopy,
 } from "react-icons/fi";
 import { FaFutbol } from "react-icons/fa";
 import DatePicker from "react-datepicker";
@@ -143,12 +144,14 @@ export default function CreateMatch() {
   const [description, setDescription] = useState("");
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [codigoPrivado, setCodigoPrivado] = useState("");
   const [skillLevel, setSkillLevel] = useState("medium");
   const [precio, setPrecio] = useState(0);
   const [serJugador, setSerJugador] = useState(false);
   const { createMatch, user } = useStore();
   const navigate = useNavigate();
   const { city, country, getFieldsCache } = useLocationStore();
+  const [showModal, setShowModal] = useState(false);
 
   // Obtener token del usuario si existe
   const token = localStorage.getItem("token");
@@ -179,6 +182,7 @@ export default function CreateMatch() {
       return;
     }
     try {
+      const fieldMap = Array(maxPlayers * 2).fill(null);
       const payload = {
         titulo: title,
         fecha: date.toISOString().split("T")[0],
@@ -188,12 +192,19 @@ export default function CreateMatch() {
         descripcion: description,
         precio: precio ? Number(precio) : 0,
         serJugador,
+        privado: isPrivate,
+        skillLevel,
+        fieldMap,
       };
       const res = await api.post("/matches", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      if (res.data.privado && res.data.codigoPrivado) {
+        setCodigoPrivado(res.data.codigoPrivado);
+        setShowModal(true);
+      }
       navigate(`/matches/${res.data.id}`);
     } catch (err) {
       alert(
@@ -448,6 +459,24 @@ export default function CreateMatch() {
               />
             </div>
           </div>
+          {/* Fila 6: Partido privado */}
+          <div className="flex items-center gap-4 pt-2">
+            <input
+              type="checkbox"
+              id="privado"
+              checked={isPrivate}
+              onChange={() => setIsPrivate(!isPrivate)}
+              className="w-5 h-5 accent-lime-500"
+            />
+            <label htmlFor="privado" className={`text-lg font-semibold ${colorsSporty.primaryText}`}>
+              Partido privado
+            </label>
+            {isPrivate && (
+              <span className="ml-2 text-sm text-orange-400">
+                Se generará un código privado para compartir con tus invitados.
+              </span>
+            )}
+          </div>
           <div className="pt-4">
             <motion.button
               whileHover={{
@@ -463,6 +492,30 @@ export default function CreateMatch() {
           </div>
         </form>
       </motion.div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className={`bg-gray-900 rounded-2xl p-8 shadow-2xl border-2 border-lime-500 max-w-sm w-full text-center`}>
+            <h2 className="text-2xl font-bold text-white mb-4">¡Partido privado creado!</h2>
+            <p className="text-lg text-gray-300 mb-2">Comparte este código con tus invitados para que puedan unirse:</p>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span className="text-3xl font-mono bg-gray-800 px-4 py-2 rounded-lg border border-lime-500 text-lime-400 select-all">{codigoPrivado}</span>
+              <button
+                onClick={() => {navigator.clipboard.writeText(codigoPrivado)}}
+                className="ml-2 p-2 rounded-lg bg-lime-500 hover:bg-lime-400 text-gray-900 font-bold"
+                title="Copiar código"
+              >
+                <FiCopy size={22} />
+              </button>
+            </div>
+            <button
+              onClick={() => setShowModal(false)}
+              className="mt-2 px-6 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

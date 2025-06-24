@@ -11,6 +11,7 @@ import {
   FiArrowLeft,
   FiShare2,
   FiStar,
+  FiCopy,
 } from "react-icons/fi";
 import { FaFutbol, FaUserPlus, FaRegStar, FaStar } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
@@ -599,6 +600,9 @@ export default function MatchDetail() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState("");
   const [fieldMap, setFieldMap] = React.useState([]); // This needs to be declared at the top level of the component
+  const [codigoInput, setCodigoInput] = useState("");
+  const [codigoError, setCodigoError] = useState("");
+  const [joinLoading, setJoinLoading] = useState(false);
 
   // Effect to fetch match data from the API
   React.useEffect(() => {
@@ -624,6 +628,7 @@ export default function MatchDetail() {
           status: apiMatch.estado,
           isPrivate: apiMatch.privado, // Map 'privado' to 'isPrivate'
           skillLevel: apiMatch.skillLevel, // Assuming skillLevel might be present or added later
+          codigoPrivado: apiMatch.codigoPrivado, // <-- Agregado para que esté disponible
         });
         setLoading(false);
       } catch (err) {
@@ -730,6 +735,8 @@ export default function MatchDetail() {
   const isFull = currentPlayersCount >= maxPlayersTotal;
   const dateBadge = match?.date ? <DateBadge date={match.date} /> : null;
 
+  const token = localStorage.getItem("token");
+
   const handleJoin = async (idx, isHomeTeam) => {
     if (!user) {
       alert("Debes iniciar sesión para unirte a un partido.");
@@ -739,45 +746,36 @@ export default function MatchDetail() {
       alert("Ya estás unido a este partido.");
       return;
     }
-
+    if (joinLoading) return;
+    setJoinLoading(true);
     try {
-      // Optimistic update
-      const newPlayerEntry = { ...user, top: null, left: null }; // Add user details, top/left will be set by drag if creator
-      setFieldMap((prevFieldMap) => {
-        const updatedFieldMap = [...prevFieldMap];
-        const targetIndex =
-          idx !== null ? idx : updatedFieldMap.findIndex((pos) => pos === null);
-        if (targetIndex !== -1 && targetIndex < updatedFieldMap.length) {
-          updatedFieldMap[targetIndex] = newPlayerEntry;
-        }
-        return updatedFieldMap;
-      });
-
       // API call to actually join the match
-      const response = await api.post(`/matches/${match.id}/join`, {
-        userId: user.id,
-        positionIndex: idx, // Pass the chosen position index
-        isHomeTeam: isHomeTeam, // Pass the team choice
-      });
-
+      const response = await api.post(
+        `/matches/${match.id}/join`,
+        {
+          userId: user.id,
+          positionIndex: idx, // Pass the chosen position index
+          isHomeTeam: isHomeTeam, // Pass the team choice
+          codigoPrivado: match.isPrivate ? codigoInput : undefined, // Solo si es privado
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       // Update match state from API response to ensure consistency
       setMatch((prevMatch) => ({
         ...prevMatch,
         players: response.data.players || prevMatch.players,
         fieldMap: response.data.fieldMap || prevMatch.fieldMap,
       }));
+      setCodigoInput(""); // Limpiar input tras unirse
     } catch (err) {
       console.error("Error joining match:", err);
       alert("No se pudo unir al partido. Inténtalo de nuevo.");
-      // Revert optimistic update if API call fails
-      setFieldMap((prevFieldMap) => {
-        const revertedFieldMap = [...prevFieldMap];
-        const userIndex = revertedFieldMap.findIndex((p) => p?.id === user.id);
-        if (userIndex !== -1) {
-          revertedFieldMap[userIndex] = null;
-        }
-        return revertedFieldMap;
-      });
+    } finally {
+      setJoinLoading(false);
     }
   };
 
@@ -1007,6 +1005,61 @@ export default function MatchDetail() {
                 </div>
               </div>
             </div>
+
+            {match.isPrivate && isCreator && (
+              <div className="mb-6 flex flex-col items-start">
+                <span className="text-lime-400 font-bold text-lg mb-1">Código privado para compartir:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-mono bg-gray-800 px-4 py-2 rounded-lg border border-lime-500 text-lime-400 select-all">{match.codigoPrivado || "-"}</span>
+                  <button
+                    onClick={() => {navigator.clipboard.writeText(match.codigoPrivado)}}
+                    className="p-2 rounded-lg bg-lime-500 hover:bg-lime-400 text-gray-900 font-bold"
+                    title="Copiar código"
+                  >
+                    <FiCopy size={20} />
+                  </button>
+                </div>
+                <span className="text-sm text-gray-400 mt-1">Solo tú puedes ver este código.</span>
+              </div>
+            )}
+            {match.isPrivate && !isCreator && !isFull && !match.players.some((player) => player.id === user?.id) && (
+              <div className="mb-6 flex flex-col items-start">
+                <label className="text-lime-400 font-bold text-lg mb-1">¿Tienes un código privado?</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={codigoInput}
+                    onChange={e => setCodigoInput(e.target.value.toUpperCase())}
+                    placeholder="Ingresa el código"
+                    className="px-4 py-2 rounded-lg bg-gray-800 border border-lime-500 text-lime-400 font-mono text-xl focus:outline-none"
+                    maxLength={10}
+                    disabled={joinLoading}
+                  />
+                  <button
+                    className="px-4 py-2 rounded-lg bg-lime-500 hover:bg-lime-400 text-gray-900 font-bold disabled:bg-gray-600 disabled:text-gray-300"
+                    onClick={async () => {
+                      setCodigoError("");
+                      if (codigoInput !== match.codigoPrivado) {
+                        setCodigoError("Código incorrecto. Verifica con el organizador.");
+                        return;
+                      }
+                      await handleJoin(null, true);
+                    }}
+                    disabled={joinLoading || !codigoInput}
+                  >
+                    {joinLoading ? "Uniendo..." : "Unirse"}
+                  </button>
+                </div>
+                {codigoError && <span className="text-red-400 mt-1">{codigoError}</span>}
+              </div>
+            )}
+            {match.isPrivate && !isCreator && !isFull && match.players.some((player) => player.id === user?.id) && (
+              <div className="mb-6 flex flex-col items-start">
+                <span className="inline-block bg-lime-600 text-gray-900 text-base font-bold px-4 py-2 rounded-full shadow mt-2">
+                  ¡Ya estás unido a este partido!
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Footer del detalle del partido */}
@@ -1021,13 +1074,14 @@ export default function MatchDetail() {
             </div>
             {!isFull &&
               user &&
-              !isCreator && // Added !isCreator to prevent creator from seeing 'join' button
-              !match.players.some((player) => player.id === user.id) && ( // Ensure user is not already in the match
+              !isCreator &&
+              !match.players.some((player) => player.id === user.id) &&
+              !match.isPrivate && (
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className={`${colorsSporty.accentOrange} hover:${colorsSporty.accentOrangeHover} px-6 py-2.5 rounded-lg text-base font-bold uppercase tracking-wide transition-all duration-300`}
-                  onClick={() => handleJoin(null, true)} // You might need logic to determine which team they join if not explicitly chosen on map
+                  onClick={() => handleJoin(null, true)}
                 >
                   Unirse al partido
                 </motion.button>

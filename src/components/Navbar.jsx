@@ -119,7 +119,7 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               <Link to="/profile" className="flex items-center gap-2 group">
                 <img
-                  src={user.avatar}
+                  src={user.avatar || "/icono-default.png"}
                   alt="avatar"
                   className="w-9 h-9 rounded-full border-2 border-lime-400 shadow"
                 />
@@ -188,7 +188,7 @@ export default function Navbar() {
                     className="flex items-center gap-2 mb-2"
                   >
                     <img
-                      src={user.avatar}
+                      src={user.avatar || "/icono-default.png"}
                       alt="avatar"
                       className="w-9 h-9 rounded-full border-2 border-lime-400 shadow"
                     />
