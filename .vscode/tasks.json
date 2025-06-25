@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Instalar dependencias principales (React, Tailwind, Zustand, Router, Icons, etc.)",
+			"command": "npm install tailwindcss postcss autoprefixer @headlessui/react @heroicons/react react-router-dom zustand react-icons clsx date-fns @tailwindcss/forms && npx tailwindcss init -p",
+			"isBackground": false
+		}
+	]
+}
