@@ -31,6 +31,7 @@ export default function Navbar() {
     { name: "Partidos", path: "/matches" },
     { name: "Canchas", path: "/fields" },
     { name: "Comunidad", path: "/community" },
+    { name: "WhatsApp Listado", path: "/whatsapp-parser" },
   ];
 
   const SportyNavLink = ({ to, children }) => {

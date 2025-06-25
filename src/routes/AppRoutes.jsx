@@ -10,6 +10,7 @@ import Profile from "../pages/Profile";
 import Dashboard from "../pages/Dashboard";
 import Field from "../pages/Field";
 import Community from "../pages/Community";
+import WhatsappParser from "../pages/WhatsappParser";
 
 // Aquí puedes agregar lógica de rutas protegidas si lo deseas
 
@@ -36,6 +37,7 @@ const AppRoutes = () => (
     />
     <Route path="/fields" element={<Field />} />
     <Route path="/matches" element={<Matches />} />
+    <Route path="/whatsapp-parser" element={<WhatsappParser />} />
     <Route path="/matches/:id" element={<MatchDetail />} />
     <Route
       path="/create-match"
