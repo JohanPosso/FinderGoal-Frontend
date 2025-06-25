@@ -303,7 +303,6 @@ export default function ProfileDashboard() {
     if (activeTab === "pastMatches") return historyMatches;
     return [];
   };
-  console.log(userData, "userdata xxxxxxx");
   return (
     <div
       className={`${colorsSporty.primaryBg} min-h-screen py-10 px-6 ${colorsSporty.primaryText}`}

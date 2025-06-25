@@ -244,7 +244,13 @@ export const useStore = create((set, get) => ({
     if (typeof userOrEmail === "string") {
       user = get().users.find((u) => u.email === userOrEmail);
     } else if (userOrEmail && userOrEmail.id) {
-      user = userOrEmail;
+      // Si es un objeto de usuario del backend, normalizar el formato
+      user = {
+        id: userOrEmail.id,
+        name: userOrEmail.nombre || userOrEmail.name,
+        email: userOrEmail.email,
+        avatar: userOrEmail.avatar,
+      };
     }
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -255,16 +261,34 @@ export const useStore = create((set, get) => ({
     localStorage.removeItem("user");
     set({ user: null });
   },
-  register: (name, email) => {
-    const newUser = {
-      id: uuidv4(),
-      name,
-      email,
-      avatar: `https://randomuser.me/api/portraits/men/${Math.floor(
-        Math.random() * 99
-      )}.jpg`,
-    };
-    set((state) => ({ users: [...state.users, newUser], user: newUser }));
+  register: (userOrName, email) => {
+    let newUser = null;
+    
+    // Si se pasa un objeto de usuario completo (desde Google OAuth)
+    if (typeof userOrName === "object" && userOrName.id) {
+      newUser = {
+        id: userOrName.id,
+        name: userOrName.nombre || userOrName.name,
+        email: userOrName.email,
+        avatar: userOrName.avatar,
+      };
+    } 
+    // Si se pasan parámetros individuales (registro tradicional)
+    else if (typeof userOrName === "string" && email) {
+      newUser = {
+        id: uuidv4(),
+        name: userOrName,
+        email: email,
+        avatar: `https://randomuser.me/api/portraits/men/${Math.floor(
+          Math.random() * 99
+        )}.jpg`,
+      };
+    }
+    
+    if (newUser) {
+      localStorage.setItem("user", JSON.stringify(newUser));
+      set((state) => ({ users: [...state.users, newUser], user: newUser }));
+    }
   },
   createMatch: (match) => {
     // Validar maxPlayers

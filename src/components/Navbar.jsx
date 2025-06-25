@@ -117,7 +117,7 @@ export default function Navbar() {
         <div className="hidden md:flex gap-4 items-center">
           {user ? (
             <div className="flex items-center gap-3">
-              <Link to="/profile" className="flex items-center gap-2 group">
+              <Link to="/dashboard" className="flex items-center gap-2 group">
                 <img
                   src={user.avatar || "/icono-default.png"}
                   alt="avatar"
@@ -183,7 +183,7 @@ export default function Navbar() {
               {user ? (
                 <>
                   <Link
-                    to="/profile"
+                    to="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-2 mb-2"
                   >

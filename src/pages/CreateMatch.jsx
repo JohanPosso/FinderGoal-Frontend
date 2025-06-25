@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useStore, useLocationStore } from "../store/useStore";
+import { useStore } from "../store/useStore";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -15,12 +15,14 @@ import {
   FiTarget,
   FiClock,
   FiCopy,
+  FiClipboard,
 } from "react-icons/fi";
 import { FaFutbol } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import api from "../utils/axios";
+import WhatsappParser from "../components/WhatsappParser";
 
 // Colores del tema Sporty & Energetic
 const colorsSporty = {
@@ -133,16 +135,12 @@ const skillLevelsOptions = [
 ];
 
 export default function CreateMatch() {
-  // Solo dejamos 'fecha' (date) y eliminamos 'hora'
-  // Eliminamos estados y lógica innecesaria
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(new Date());
   const [hour, setHour] = useState("18:00");
-  const [location, setLocation] = useState("");
   const [direccion, setDireccion] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(10);
   const [description, setDescription] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [codigoPrivado, setCodigoPrivado] = useState("");
   const [skillLevel, setSkillLevel] = useState("medium");
@@ -150,25 +148,11 @@ export default function CreateMatch() {
   const [serJugador, setSerJugador] = useState(false);
   const { createMatch, user } = useStore();
   const navigate = useNavigate();
-  const { city, country, getFieldsCache } = useLocationStore();
   const [showModal, setShowModal] = useState(false);
+  const [showWhatsappParser, setShowWhatsappParser] = useState(false);
 
   // Obtener token del usuario si existe
   const token = localStorage.getItem("token");
-
-  React.useEffect(() => {
-    if (city && country) {
-      const fields = getFieldsCache(city, country);
-      if (fields && fields.length > 0) {
-        const field = fields[0];
-        if (field) {
-          setLocation(field.name || "");
-          // Ya no hay dirección separada
-          setPrecio(field.price || 0);
-        }
-      }
-    }
-  }, [city, country, getFieldsCache]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -182,7 +166,6 @@ export default function CreateMatch() {
       return;
     }
     try {
-      const fieldMap = Array(maxPlayers * 2).fill(null);
       const payload = {
         titulo: title,
         fecha: date.toISOString().split("T")[0],
@@ -194,7 +177,6 @@ export default function CreateMatch() {
         serJugador,
         privado: isPrivate,
         skillLevel,
-        fieldMap,
       };
       const res = await api.post("/matches", payload, {
         headers: {
@@ -213,22 +195,54 @@ export default function CreateMatch() {
     }
   };
 
-  // Efecto para autocompletar datos de cancha si hay selección previa
-  React.useEffect(() => {
-    // Si hay city/country y hay canchas cacheadas, autocompletar
-    if (city && country) {
-      const fields = getFieldsCache(city, country);
-      if (fields && fields.length > 0) {
-        // Tomar la primera cancha como sugerencia
-        const field = fields[0];
-        if (field) {
-          setLocation(field.name || "");
-          // Ya no hay dirección separada
-          setPrecio(field.price || 0);
-        }
+  // Función para manejar los datos extraídos del parser de WhatsApp
+  const handleWhatsappDataExtracted = (data) => {
+    // Aplicar fecha si está disponible
+    if (data.fecha) {
+      const fechaParts = data.fecha.split('-');
+      if (fechaParts.length === 3) {
+        const year = parseInt(fechaParts[0]);
+        const month = parseInt(fechaParts[1]) - 1; // Los meses en JS van de 0-11
+        const day = parseInt(fechaParts[2]);
+        setDate(new Date(year, month, day));
       }
     }
-  }, [city, country, getFieldsCache]);
+
+    // Aplicar hora si está disponible
+    if (data.hora) {
+      setHour(data.hora);
+    }
+
+    // Aplicar ubicación si está disponible
+    if (data.ubicacion) {
+      setDireccion(data.ubicacion);
+    }
+
+    // Aplicar precio si está disponible
+    if (data.precio && data.precio > 0) {
+      setPrecio(data.precio);
+    }
+
+    // Aplicar número de jugadores basado en la lista si está disponible
+    if (data.jugadores && data.jugadores.length > 0) {
+      setMaxPlayers(data.jugadores.length);
+    }
+
+    // Crear descripción con información adicional
+    let descripcion = "";
+    if (data.tipoFutbol) {
+      descripcion += `Tipo: ${data.tipoFutbol}. `;
+    }
+    if (data.jugadores && data.jugadores.length > 0) {
+      descripcion += `Jugadores confirmados: ${data.jugadores.join(', ')}. `;
+    }
+    if (descripcion) {
+      setDescription(descripcion);
+    }
+
+    // Mostrar mensaje de éxito
+    alert("¡Datos aplicados exitosamente! Revisa y ajusta la información según sea necesario.");
+  };
 
   return (
     <motion.div
@@ -477,6 +491,21 @@ export default function CreateMatch() {
               </span>
             )}
           </div>
+
+          {/* Botón de WhatsApp Parser */}
+          <div className="pt-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => setShowWhatsappParser(true)}
+              className={`w-full ${colorsSporty.accentOrange} hover:${colorsSporty.accentOrangeHover} ${colorsSporty.primaryText} py-3 md:py-4 rounded-lg font-bold transition-all duration-300 text-lg md:text-xl shadow-lg flex items-center justify-center mb-4`}
+            >
+              <FiClipboard className="mr-3 text-2xl md:text-3xl" /> 
+              Pegar Listado de WhatsApp
+            </motion.button>
+          </div>
+
           <div className="pt-4">
             <motion.button
               whileHover={{
@@ -515,6 +544,14 @@ export default function CreateMatch() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Modal de WhatsApp Parser */}
+      {showWhatsappParser && (
+        <WhatsappParser
+          onDataExtracted={handleWhatsappDataExtracted}
+          onClose={() => setShowWhatsappParser(false)}
+        />
       )}
     </motion.div>
   );
