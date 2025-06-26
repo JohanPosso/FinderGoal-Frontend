@@ -163,6 +163,7 @@ export default function MatchDetail() {
           isPrivate: apiMatch.privado,
           skillLevel: apiMatch.skillLevel,
           codigoPrivado: apiMatch.codigoPrivado,
+          jugadoresInvitados: apiMatch.jugadoresInvitados,
         });
         setLoading(false);
       } catch (err) {
@@ -237,16 +238,25 @@ export default function MatchDetail() {
     );
   }
 
-  // Ensure 'players' and 'maxPlayers' are safely accessed
-  const currentPlayersCount = match?.players?.length || 0;
+  // Obtener la lista de jugadores: reales y luego invitados
+  const jugadoresInvitados = match.jugadoresInvitados || [];
+  const jugadoresReales = match.players || [];
+  // Mezclar: primero los reales, luego los invitados
+  const jugadores = [
+    ...jugadoresReales,
+    ...jugadoresInvitados.map(nombre => ({ nombre }))
+  ];
+
   const maxPlayersTotal = match?.maxPlayers || 0;
-  const isFull = currentPlayersCount >= maxPlayersTotal;
+  const plazasOcupadas = jugadores.length;
+  const plazasLibres = Math.max(0, maxPlayersTotal - plazasOcupadas);
+  const isFull = plazasLibres === 0;
   const dateBadge = match?.fecha ? <DateBadge date={match.fecha} /> : null;
 
-  // Added for team split logic
+  // Lógica de equipos
   const playersPerTeam = Math.ceil(maxPlayersTotal / 2);
-  const team1 = match.players.slice(0, playersPerTeam);
-  const team2 = match.players.slice(playersPerTeam);
+  const team1 = jugadores.slice(0, playersPerTeam);
+  const team2 = jugadores.slice(playersPerTeam, maxPlayersTotal);
 
   const token = localStorage.getItem("token");
 
@@ -291,6 +301,7 @@ export default function MatchDetail() {
         isPrivate: apiMatch.privado,
         skillLevel: apiMatch.skillLevel,
         codigoPrivado: apiMatch.codigoPrivado,
+        jugadoresInvitados: apiMatch.jugadoresInvitados,
       });
       setCodigoInput("");
       setCodigoError(""); // Clear error on successful join
@@ -381,7 +392,7 @@ export default function MatchDetail() {
                 <div>
                   <p className={`${colorsSporty.secondaryText} text-sm`}>Jugadores</p>
                   <p className={`${colorsSporty.primaryText} font-semibold`}>
-                    {currentPlayersCount}/{maxPlayersTotal}
+                    {plazasOcupadas}/{maxPlayersTotal}
                   </p>
                 </div>
               </div>
@@ -440,7 +451,7 @@ export default function MatchDetail() {
                     <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
                       {team1.map((player, idx) => (
                         <motion.div
-                          key={player.id || idx}
+                          key={player.id || player.nombre || idx}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.1 + idx * 0.05 }}
@@ -448,14 +459,13 @@ export default function MatchDetail() {
                         >
                           <img
                             src={
-                              player.avatar ||
-                              getAvatarUrl()
+                              player.avatar || getAvatarUrl()
                             }
                             alt={player.nombre || "Jugador"}
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-lime-500 shadow-md"
                           />
                           <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText} max-w-full truncate`}>
-                            {player?.nombre ? player.nombre.split(" ")[0] : "Vacío"}
+                            {player?.nombre ? player.nombre.split(" ")[0] : typeof player === 'string' ? player.split(" ")[0] : "Vacío"}
                           </span>
                         </motion.div>
                       ))}
@@ -486,7 +496,7 @@ export default function MatchDetail() {
                     <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
                       {team2.map((player, idx) => (
                         <motion.div
-                          key={player.id || idx}
+                          key={player.id || player.nombre || idx}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.1 + idx * 0.05 }}
@@ -494,14 +504,13 @@ export default function MatchDetail() {
                         >
                           <img
                             src={
-                              player.avatar ||
-                              getAvatarUrl()
+                              player.avatar || getAvatarUrl()
                             }
                             alt={player.nombre || "Jugador"}
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-orange-500 shadow-md"
                           />
                           <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText} max-w-full truncate`}>
-                            {player?.nombre ? player.nombre.split(" ")[0] : "Vacío"}
+                            {player?.nombre ? player.nombre.split(" ")[0] : typeof player === 'string' ? player.split(" ")[0] : "Vacío"}
                           </span>
                         </motion.div>
                       ))}
@@ -600,7 +609,8 @@ export default function MatchDetail() {
 
             {/* Status messages for user */}
             <div className="mt-8">
-              {!isCreator && !isFull && !match.isPrivate && user && !match.players.some((player) => player.id === user.id) && (
+              {/* Botón Unirme solo si hay plazas libres y el usuario no está inscrito */}
+              {!isFull && user && !jugadoresReales.some((player) => player.id === user.id) && (
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
@@ -612,7 +622,8 @@ export default function MatchDetail() {
                 </motion.button>
               )}
 
-              {!user && (
+              {/* Si no hay usuario, mostrar link a login para unirse */}
+              {!user && !isFull && (
                 <p className={`${colorsSporty.secondaryText} text-center mt-8 text-lg`}>
                   <Link to="/login" className={`${colorsSporty.accentLimeText} hover:underline font-bold`}>Inicia sesión</Link> para unirte o gestionar partidos.
                 </p>

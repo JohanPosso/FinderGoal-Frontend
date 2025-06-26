@@ -18,6 +18,7 @@ import {
 } from "react-icons/fi";
 import { FaFutbol, FaWhatsapp } from "react-icons/fa";
 import { parseWhatsappList, isValidWhatsappList, cleanWhatsappText } from "../utils/whatsappParser";
+import api from "../utils/axios";
 
 // Colores del tema Sporty & Energetic
 const colorsSporty = {
@@ -88,11 +89,45 @@ export default function WhatsappParserPage() {
     }
   };
 
-  const handleCreateMatch = () => {
-    if (extractedData) {
-      // Guardar datos en localStorage para que CreateMatch los use
-      localStorage.setItem('whatsappExtractedData', JSON.stringify(extractedData));
-      navigate('/create-match');
+  const handleCreateMatch = async () => {
+    if (!extractedData) return;
+
+    // Armar el payload según lo que espera el endpoint
+    const payload = {
+      nombre: extractedData.titulo || extractedData.nombre || 
+        (() => {
+          // Generar un título descriptivo basado en los datos extraídos
+          let titulo = "Partido de Fútbol";
+          if (extractedData.fecha) {
+            const fecha = new Date(extractedData.fecha);
+            titulo += ` - ${fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+          }
+          if (extractedData.hora) {
+            titulo += ` ${extractedData.hora}`;
+          }
+          if (extractedData.tipoFutbol) {
+            titulo += ` (${extractedData.tipoFutbol})`;
+          }
+          return titulo;
+        })(),
+      fecha: extractedData.fecha && extractedData.hora
+        ? new Date(`${extractedData.fecha}T${extractedData.hora}`).toISOString()
+        : extractedData.fecha
+          ? new Date(`${extractedData.fecha}T18:00`).toISOString()
+          : null,
+      ubicacion: extractedData.ubicacion || "",
+      jugadoresMaximos: extractedData.jugadores?.length || 12,
+      notas: (extractedData.tipoFutbol ? `Tipo: ${extractedData.tipoFutbol}. ` : "") + (extractedData.notas || ""),
+      jugadoresInvitados: extractedData.jugadores || []
+    };
+
+    try {
+      const res = await api.post('/matches/guest', payload);
+      const data = res.data;
+      // Redirigir al detalle del partido
+      navigate(`/matches/${data.id}`);
+    } catch (err) {
+      setError('Error al crear el partido como invitado. Intenta de nuevo.');
     }
   };
 

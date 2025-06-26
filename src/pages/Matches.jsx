@@ -142,7 +142,7 @@ export default function Matches() {
                 <Link to={`/matches/${match.id}`} className="block">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-extrabold ${colorsSporty.primaryText} truncate pr-4 leading-tight">
-                      {match.titulo}
+                      {match.titulo || match.nombre || "Partido sin título"}
                     </h2>
                     <span
                       className={`text-xs ${colorsSporty.accentOrange} px-3 py-1.5 rounded-full font-bold uppercase`}
@@ -158,7 +158,7 @@ export default function Matches() {
                     <FiMapPin
                       className={`mr-3 ${colorsSporty.accentLimeText} text-xl`}
                     />
-                    <span className="truncate">{match.ubicacionNombre}</span>
+                    <span className="truncate">{match.ubicacion || match.ubicacionNombre || match.direccion || "Ubicación no especificada"}</span>
                   </div>
                   <div
                     className={`flex items-center ${colorsSporty.secondaryText} mb-2 text-lg`}
@@ -168,16 +168,16 @@ export default function Matches() {
                     />
                     <span>
                       <span className="font-semibold text-lime-400">
-                        {match.jugadores?.length || 0}
+                        {(match.jugadores?.length || 0) + (match.jugadoresInvitados?.length || 0)}
                       </span>
-                      /{match.maxPlayers} jugadores
+                      /{match.maxPlayers || match.jugadoresMaximos || 0} jugadores
                     </span>
                   </div>
-                  {match.descripcion && (
+                  {(match.descripcion || match.notas) && (
                     <div
                       className={`text-sm ${colorsSporty.secondaryText} mt-4 line-clamp-2 leading-relaxed opacity-90`}
                     >
-                      {match.descripcion}
+                      {match.descripcion || match.notas}
                     </div>
                   )}
                 </Link>
