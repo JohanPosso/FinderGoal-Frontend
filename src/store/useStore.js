@@ -335,6 +335,11 @@ export const useStore = create((set, get) => ({
     set({ user: newUser });
     localStorage.setItem("user", JSON.stringify(newUser));
   },
+  deleteMatch: (matchId) => {
+    set((state) => ({
+      matches: state.matches.filter((m) => m.id !== matchId),
+    }));
+  },
 }));
 
 // Estado global para ubicación y caché de canchas por ciudad/país

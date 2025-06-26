@@ -4,6 +4,7 @@ import { FaFutbol } from "react-icons/fa";
 import { motion } from "framer-motion"; // Import motion for animations
 import { FiMenu, FiX, FiLogOut, FiUser } from "react-icons/fi"; // Import icons for mobile menu
 import { useStore } from "../store/useStore";
+import { getAvatarUrl } from "../utils/helpers";
 
 // Re-using the color configuration from the Sporty & Energetic landing page
 const colorsSporty = {
@@ -31,7 +32,7 @@ export default function Navbar() {
     { name: "Partidos", path: "/matches" },
     { name: "Canchas", path: "/fields" },
     { name: "Comunidad", path: "/community" },
-    { name: "WhatsApp Listado", path: "/whatsapp-parser" },
+    { name: " Listado", path: "/whatsapp-parser" },
   ];
 
   const SportyNavLink = ({ to, children }) => {
@@ -120,7 +121,7 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               <Link to="/dashboard" className="flex items-center gap-2 group">
                 <img
-                  src={user.avatar || "/icono-default.png"}
+                  src={getAvatarUrl(user.avatar)}
                   alt="avatar"
                   className="w-9 h-9 rounded-full border-2 border-lime-400 shadow"
                 />
@@ -189,7 +190,7 @@ export default function Navbar() {
                     className="flex items-center gap-2 mb-2"
                   >
                     <img
-                      src={user.avatar || "/icono-default.png"}
+                      src={getAvatarUrl(user.avatar)}
                       alt="avatar"
                       className="w-9 h-9 rounded-full border-2 border-lime-400 shadow"
                     />

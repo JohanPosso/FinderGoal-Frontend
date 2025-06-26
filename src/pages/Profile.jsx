@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { FiEdit, FiLogOut, FiUsers, FiFrown, FiAward, FiMail, FiUser } from "react-icons/fi";
 import { FaFutbol } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { getAvatarUrl } from "../utils/helpers";
 
 // Paleta deportiva
 const colorsSporty = {
@@ -62,7 +63,7 @@ export default function Profile() {
         >
           <div className="relative mb-4">
             <img
-              src={avatar || "/default-avatar.png"}
+              src={getAvatarUrl(avatar) || "/default-avatar.png"}
               alt="avatar"
               className="w-32 h-32 rounded-full border-4 border-lime-500 shadow-lg object-cover"
             />

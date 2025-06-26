@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useStore } from "../store/useStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FiCalendar,
@@ -150,9 +150,18 @@ export default function CreateMatch() {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [showWhatsappParser, setShowWhatsappParser] = useState(false);
+  const location = useLocation();
+  const searchParams = useSearchParams()[0];
 
   // Obtener token del usuario si existe
   const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const matchId = searchParams.get("id");
+    if (matchId) {
+      fetchMatchData(matchId);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -165,6 +174,10 @@ export default function CreateMatch() {
       alert("Completa todos los campos obligatorios.");
       return;
     }
+
+    const isEditing = searchParams.has("id");
+    const matchId = searchParams.get("id");
+
     try {
       const payload = {
         titulo: title,
@@ -178,19 +191,34 @@ export default function CreateMatch() {
         privado: isPrivate,
         skillLevel,
       };
-      const res = await api.post("/matches", payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.data.privado && res.data.codigoPrivado) {
-        setCodigoPrivado(res.data.codigoPrivado);
-        setShowModal(true);
+
+      let res;
+      if (isEditing) {
+        // Actualizar partido existente
+        res = await api.patch(`/matches/${matchId}`, payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        alert("Partido actualizado exitosamente");
+      } else {
+        // Crear nuevo partido
+        res = await api.post("/matches", payload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.data.privado && res.data.codigoPrivado) {
+          setCodigoPrivado(res.data.codigoPrivado);
+          setShowModal(true);
+        }
       }
+      
       navigate(`/matches/${res.data.id}`);
     } catch (err) {
+      const action = isEditing ? "actualizar" : "crear";
       alert(
-        "Error al crear el partido. Verifica los datos e inténtalo de nuevo."
+        `Error al ${action} el partido. Verifica los datos e inténtalo de nuevo.`
       );
     }
   };
@@ -244,6 +272,33 @@ export default function CreateMatch() {
     alert("¡Datos aplicados exitosamente! Revisa y ajusta la información según sea necesario.");
   };
 
+  const fetchMatchData = async (id) => {
+    try {
+      const res = await api.get(`/matches/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      const matchData = res.data;
+      setTitle(matchData.titulo || matchData.title || "");
+      setDate(new Date(matchData.fecha || matchData.date));
+      setHour(matchData.hora || matchData.hour || "18:00");
+      setDireccion(matchData.direccion || matchData.location || "");
+      setMaxPlayers(matchData.maxPlayers || 10);
+      setDescription(matchData.descripcion || matchData.description || "");
+      setIsPrivate(matchData.privado || matchData.isPrivate || false);
+      setSkillLevel(matchData.skillLevel || "medium");
+      setPrecio(matchData.precio || matchData.price || 0);
+      setSerJugador(matchData.serJugador || matchData.willPlay || false);
+    } catch (err) {
+      console.error("Error fetching match data:", err);
+      alert("Error al cargar los datos del partido.");
+    }
+  };
+
+  const isEditing = searchParams.has("id");
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -264,7 +319,7 @@ export default function CreateMatch() {
             />
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
-                Crear{" "}
+                {isEditing ? "Editar" : "Crear"}{" "}
                 <span className={`${colorsSporty.accentLimeText}`}>
                   Partido
                 </span>
@@ -272,7 +327,10 @@ export default function CreateMatch() {
               <p
                 className={`${colorsSporty.secondaryText} text-md md:text-lg mt-1`}
               >
-                ¡Organiza tu próximo encuentro y haz que el balón ruede!
+                {isEditing 
+                  ? "Modifica los detalles de tu partido y actualiza la información."
+                  : "¡Organiza tu próximo encuentro y haz que el balón ruede!"
+                }
               </p>
             </div>
           </div>
@@ -516,7 +574,8 @@ export default function CreateMatch() {
               type="submit"
               className={`w-full ${colorsSporty.accentLime} hover:${colorsSporty.accentLimeHover} ${colorsSporty.primaryText} py-3 md:py-4 rounded-lg font-bold uppercase tracking-wide transition-all duration-300 text-lg md:text-xl shadow-lg flex items-center justify-center`}
             >
-              <FaFutbol className="mr-3 text-2xl md:text-3xl" /> Crear Partido
+              <FaFutbol className="mr-3 text-2xl md:text-3xl" /> 
+              {isEditing ? "Actualizar Partido" : "Crear Partido"}
             </motion.button>
           </div>
         </form>

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { format, isToday, isTomorrow, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -15,6 +15,7 @@ import {
   FiDollarSign, // Added for price icon
 } from "react-icons/fi";
 import { FaFutbol, FaRegStar, FaStar } from "react-icons/fa";
+import { getAvatarUrl } from "../utils/helpers";
 
 // Re-using the color configuration from the Sporty & Energetic landing page
 const colorsSporty = {
@@ -273,10 +274,24 @@ export default function MatchDetail() {
           },
         }
       );
-      setMatch((prevMatch) => ({
-        ...prevMatch,
-        players: response.data.players || prevMatch.players,
-      }));
+      // Actualiza todo el objeto match con la respuesta del backend
+      const apiMatch = response.data;
+      setMatch({
+        id: apiMatch.id,
+        title: apiMatch.titulo,
+        fecha: apiMatch.fecha,
+        hora: apiMatch.hora,
+        location: apiMatch.direccion,
+        creator: apiMatch.creador,
+        players: apiMatch.jugadores,
+        maxPlayers: apiMatch.maxPlayers,
+        description: apiMatch.descripcion,
+        price: apiMatch.precio,
+        status: apiMatch.estado,
+        isPrivate: apiMatch.privado,
+        skillLevel: apiMatch.skillLevel,
+        codigoPrivado: apiMatch.codigoPrivado,
+      });
       setCodigoInput("");
       setCodigoError(""); // Clear error on successful join
     } catch (err) {
@@ -300,7 +315,7 @@ export default function MatchDetail() {
     setTimeout(() => setCopied(false), 2000); // Reset state after 2 seconds
   };
 
-  const creatorAvatar = match.creator?.avatar || "https://via.placeholder.com/150/0f172a/9ca3af?text=ORG";
+  const creatorAvatar = match.creator?.avatar || getAvatarUrl();
 
 
   return (
@@ -407,20 +422,22 @@ export default function MatchDetail() {
               <h3 className="text-2xl font-bold text-white mb-5 text-center">
                 ¡Conoce a los Jugadores!
               </h3>
-              <div className="relative bg-gradient-to-b from-gray-700 to-gray-800 p-6 rounded-2xl border border-gray-700 shadow-inner">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="relative bg-gradient-to-b from-gray-700 to-gray-800 p-4 sm:p-6 rounded-2xl border border-gray-700 shadow-inner">
+                {/* Layout responsive: flex-col en móviles, grid en desktop */}
+                <div className="flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-6">
                   {/* Equipo 1 */}
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="flex flex-col items-center bg-gray-900 p-4 rounded-lg border border-lime-500 shadow-lg"
+                    className="flex flex-col items-center bg-gray-900 p-3 sm:p-4 rounded-lg border border-lime-500 shadow-lg"
                   >
-                    <h4 className="font-bold text-xl text-lime-400 mb-4 flex items-center">
-                      <div className="w-4 h-4 rounded-full bg-lime-500 mr-2 border border-gray-900"></div>
-                      Equipo 1 ({team1.length}/{playersPerTeam})
+                    <h4 className="font-bold text-lg sm:text-xl text-lime-400 mb-3 sm:mb-4 flex items-center text-center">
+                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-lime-500 mr-2 border border-gray-900 flex-shrink-0"></div>
+                      <span className="text-sm sm:text-base">Equipo 1 ({team1.length}/{playersPerTeam})</span>
                     </h4>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
+                    {/* Grid responsive para jugadores */}
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
                       {team1.map((player, idx) => (
                         <motion.div
                           key={player.id || idx}
@@ -432,12 +449,12 @@ export default function MatchDetail() {
                           <img
                             src={
                               player.avatar ||
-                              "https://via.placeholder.com/150/0f172a/9ca3af?text=JP"
+                              getAvatarUrl()
                             }
                             alt={player.nombre || "Jugador"}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-lime-500 shadow-md"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-lime-500 shadow-md"
                           />
-                          <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText}`}>
+                          <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText} max-w-full truncate`}>
                             {player?.nombre ? player.nombre.split(" ")[0] : "Vacío"}
                           </span>
                         </motion.div>
@@ -445,8 +462,8 @@ export default function MatchDetail() {
                       {/* Placeholder para cupos vacíos en Equipo 1 */}
                       {[...Array(playersPerTeam - team1.length)].map((_, i) => (
                         <div key={`empty-1-${i}`} className="flex flex-col items-center text-center opacity-60">
-                          <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border-2 border-gray-600">
-                            <FiUsers size={20} />
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border-2 border-gray-600">
+                            <FiUsers size={16} className="sm:w-5 sm:h-5" />
                           </div>
                           <span className={`${colorsSporty.secondaryText} text-xs mt-1`}>Libre</span>
                         </div>
@@ -459,13 +476,14 @@ export default function MatchDetail() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="flex flex-col items-center bg-gray-900 p-4 rounded-lg border border-orange-500 shadow-lg"
+                    className="flex flex-col items-center bg-gray-900 p-3 sm:p-4 rounded-lg border border-orange-500 shadow-lg"
                   >
-                    <h4 className="font-bold text-xl text-orange-400 mb-4 flex items-center">
-                      <div className="w-4 h-4 rounded-full bg-orange-500 mr-2 border border-gray-900"></div>
-                      Equipo 2 ({team2.length}/{playersPerTeam})
+                    <h4 className="font-bold text-lg sm:text-xl text-orange-400 mb-3 sm:mb-4 flex items-center text-center">
+                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-orange-500 mr-2 border border-gray-900 flex-shrink-0"></div>
+                      <span className="text-sm sm:text-base">Equipo 2 ({team2.length}/{playersPerTeam})</span>
                     </h4>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
+                    {/* Grid responsive para jugadores */}
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
                       {team2.map((player, idx) => (
                         <motion.div
                           key={player.id || idx}
@@ -477,12 +495,12 @@ export default function MatchDetail() {
                           <img
                             src={
                               player.avatar ||
-                              "https://via.placeholder.com/150/0f172a/9ca3af?text=JP"
+                              getAvatarUrl()
                             }
                             alt={player.nombre || "Jugador"}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-orange-500 shadow-md"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-orange-500 shadow-md"
                           />
-                          <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText}`}>
+                          <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText} max-w-full truncate`}>
                             {player?.nombre ? player.nombre.split(" ")[0] : "Vacío"}
                           </span>
                         </motion.div>
@@ -490,8 +508,8 @@ export default function MatchDetail() {
                       {/* Placeholder para cupos vacíos en Equipo 2 */}
                       {[...Array(playersPerTeam - team2.length)].map((_, i) => (
                         <div key={`empty-2-${i}`} className="flex flex-col items-center text-center opacity-60">
-                          <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border-2 border-gray-600">
-                            <FiUsers size={20} />
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border-2 border-gray-600">
+                            <FiUsers size={16} className="sm:w-5 sm:h-5" />
                           </div>
                           <span className={`${colorsSporty.secondaryText} text-xs mt-1`}>Libre</span>
                         </div>

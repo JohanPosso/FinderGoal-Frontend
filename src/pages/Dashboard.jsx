@@ -21,6 +21,7 @@ import {
 } from "react-icons/fi";
 import { FaFutbol } from "react-icons/fa"; // For general sports theme
 import api from "../utils/axios";
+import { getAvatarUrl, getRegistrationDate } from "../utils/helpers";
 
 // Re-using the color configuration from the Sporty & Energetic theme
 const colorsSporty = {
@@ -45,7 +46,13 @@ const colorsSporty = {
 
 // --- Sub-component: MatchCard ---
 function MatchCard({ match, onView, onEdit, onDelete, user, isPastMatch }) {
-  const isCreator = user && match.creator && user.id === match.creator.id;
+  // Mejorar la detección del creador para manejar diferentes estructuras de datos
+  const isCreator = user && (
+    (match.creator && user.id === match.creator.id) ||
+    (match.creador && user.id === match.creador.id) ||
+    (match.creatorId && user.id === match.creatorId) ||
+    (match.creadorId && user.id === match.creadorId)
+  );
 
   const cardVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -167,6 +174,29 @@ export default function ProfileDashboard() {
     }
   }, [user]);
 
+  // Cargar información completa del usuario desde la API
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user?.id) {
+        try {
+          const res = await api.get(`/users/${user.id}`);
+          setUserData(res.data);
+          setEditNombre(res.data.nombre || res.data.name || "");
+          setEditEmail(res.data.email || "");
+          setEditAvatar(res.data.avatar || "");
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+          // Si falla, usar los datos del store
+          setUserData(user);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user?.id]);
+
   // Cargar historial solo cuando se selecciona la pestaña
   useEffect(() => {
     const fetchHistory = async () => {
@@ -206,6 +236,7 @@ export default function ProfileDashboard() {
         setErrorMyMatches("");
         try {
           const res = await api.get(`/users/${user.id}/mine`);
+          
           // Normalizar los datos para que coincidan con MatchCard
           const normalized = res.data.map((m) => ({
             ...m,
@@ -217,6 +248,7 @@ export default function ProfileDashboard() {
             players: m.jugadores || m.players || [],
             creator: user, // El usuario actual es el creador
           }));
+          
           setMyMatches(normalized);
         } catch (err) {
           setErrorMyMatches("No se pudo cargar tus partidos creados.");
@@ -276,13 +308,50 @@ export default function ProfileDashboard() {
     isPast(new Date(match.date))
   );
 
-  const handleDeleteMatch = (matchId) => {
+  const handleDeleteMatch = async (matchId) => {
     if (
       window.confirm(
         "¿Estás seguro de que quieres eliminar este partido? Esta acción es irreversible."
       )
     ) {
-      deleteMatch(matchId);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await api.delete(`/matches/${matchId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        // Si llegamos aquí, la eliminación fue exitosa
+        // Actualizar la lista de partidos después de eliminar
+        if (activeTab === "myMatches") {
+          setMyMatches(prev => prev.filter(match => match.id !== matchId));
+        }
+        
+        // También actualizar el store global si es necesario
+        deleteMatch(matchId);
+        
+        alert("Partido eliminado exitosamente");
+      } catch (err) {
+        console.error("Error deleting match:", err);
+        
+        // Verificar diferentes tipos de respuesta que pueden indicar éxito
+        const status = err.response?.status;
+        const statusText = err.response?.statusText;
+        
+        // Si el status es 200, 204, o 404, probablemente la eliminación fue exitosa
+        if (status === 200 || status === 204 || status === 404) {
+          // Actualizar la lista de todos modos
+          if (activeTab === "myMatches") {
+            setMyMatches(prev => prev.filter(match => match.id !== matchId));
+          }
+          deleteMatch(matchId);
+          alert("Partido eliminado exitosamente");
+        } else {
+          // Solo mostrar error si realmente hay un problema
+          alert("No se pudo eliminar el partido. Inténtalo de nuevo.");
+        }
+      }
     }
   };
 
@@ -290,11 +359,14 @@ export default function ProfileDashboard() {
     navigate(`/matches/${matchId}`);
   };
 
-  const handleEditMatch = (matchId) => {
-    // Implement edit logic, maybe navigate to a /edit-match/:id route
-    // For now, let's just navigate to create, and you'd load the match data there
-    alert(`Funcionalidad de edición para el partido ID: ${matchId}`);
-    // navigate(`/create-match?edit=${matchId}`); // Example of passing edit param
+  const handleEditMatch = async (matchId) => {
+    try {
+      // Navegar directamente a la página de crear partido con el ID para editar
+      navigate(`/create-match?id=${matchId}`);
+    } catch (err) {
+      console.error("Error navigating to edit match:", err);
+      alert("No se pudo abrir el editor del partido. Inténtalo de nuevo.");
+    }
   };
 
   const currentTabMatches = () => {
@@ -316,19 +388,11 @@ export default function ProfileDashboard() {
           className="flex flex-col md:flex-row justify-between items-center mb-10 pb-6 border-b border-gray-700"
         >
           <div className="flex items-center mb-6 md:mb-0">
-            {userData?.avatar ? (
-              <img
-                src={userData.avatar || "/icono-default.png"}
-                alt="Avatar"
-                className="w-24 h-24 rounded-full object-cover border-4 border-lime-500 mr-6"
-              />
-            ) : (
-              <img
-                src="/icono-default.png"
-                alt="Avatar"
-                className="w-24 h-24 rounded-full object-cover border-4 border-lime-500 mr-6"
-              />
-            )}
+            <img
+              src={getAvatarUrl(userData?.avatar)}
+              alt="Avatar"
+              className="w-24 h-24 rounded-full object-cover border-4 border-lime-500 mr-6"
+            />
             <div>
               <h1 className="text-4xl md:text-5xl font-extrabold text-white leading-tight">
                 Mi <span className={colorsSporty.accentLimeText}>Perfil</span>
@@ -351,8 +415,7 @@ export default function ProfileDashboard() {
                   </p>
                   <p className={`${colorsSporty.secondaryText} text-sm mt-1`}>
                     Registrado:{" "}
-                    {userData?.fechaRegistro &&
-                      new Date(userData.fechaRegistro).toLocaleDateString()}
+                    {getRegistrationDate(userData)}
                   </p>
                 </>
               )}
