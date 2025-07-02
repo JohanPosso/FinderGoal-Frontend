@@ -421,7 +421,16 @@ export default function ProfileDashboard() {
               )}
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 items-end">
+            {user?.isAdmin && (
+              <Link
+                to="/admin"
+                className="text-lime-400 hover:text-lime-300 font-bold text-md underline mb-2 transition-colors duration-200"
+                style={{ alignSelf: 'flex-end' }}
+              >
+                Ir al Panel Admin
+              </Link>
+            )}
             <button
               onClick={() => setEditMode((v) => !v)}
               className={`inline-flex items-center px-4 py-3 rounded-lg font-bold uppercase tracking-wide transition-all duration-300 ${colorsSporty.accentOrange} hover:${colorsSporty.accentOrangeHover}`}
@@ -645,6 +654,19 @@ export default function ProfileDashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* --- Botón de acceso a Admin (solo para admins) --- */}
+        {user?.isAdmin && (
+          <div className="flex justify-end mb-6">
+            <Link
+              to="/admin"
+              className="inline-flex items-center px-6 py-3 rounded-lg font-bold uppercase tracking-wide bg-gradient-to-r from-lime-500 to-green-500 text-gray-900 shadow-lg hover:from-lime-400 hover:to-green-400 transition-all duration-300 text-lg gap-3"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0-1.104.896-2 2-2s2 .896 2 2-.896 2-2 2-2-.896-2-2zm0 0V7m0 4v4m0 0c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2z" /></svg>
+              Panel Admin
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

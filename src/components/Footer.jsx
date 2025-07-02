@@ -41,7 +41,12 @@ export default function Footer() {
         {/* About Section */}
         <div>
           <div className="flex items-center mb-5">
-            <FaFutbol className="text-4xl text-lime-500 mr-3" />
+            <img
+              src="/dark_logo.webp"
+              alt="FinderGoal Logo"
+              className="w-12 h-12  mb-4 drop-shadow-lg rounded-full "
+              draggable={false}
+            />
             <span className="text-2xl font-extrabold text-white">
               FinderGoal
             </span>
@@ -92,7 +97,7 @@ export default function Footer() {
               789
             </li>
             <li className="flex items-center">
-              <span className="mr-2 text-lime-500 text-lg">📍</span> Madrid,
+              <span className="mr-2 text-lime-500 text-lg">📍</span> Valladolid,
               España
             </li>
           </ul>

@@ -1,0 +1,12 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="128" cy="128" r="120" fill="#84cc16"/>
+  <ellipse cx="128" cy="128" rx="70" ry="70" fill="#fff"/>
+  <!-- Paneles 3D -->
+  <polygon points="128,90 150,120 128,150 106,120" fill="#222"/>
+  <polygon points="128,90 150,120 170,110 150,80" fill="#b9f227"/>
+  <polygon points="128,90 106,120 86,110 106,80" fill="#b9f227"/>
+  <!-- Brillo -->
+  <ellipse cx="110" cy="110" rx="18" ry="8" fill="#fff" opacity="0.5"/>
+  <!-- Sombra -->
+  <ellipse cx="140" cy="150" rx="20" ry="8" fill="#222" opacity="0.2"/>
+</svg> 

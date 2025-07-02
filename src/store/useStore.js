@@ -233,10 +233,11 @@ function getInitialFieldMap(maxPlayers) {
   return arr;
 }
 
-// Persistencia de sesión
-const storedUser = localStorage.getItem("user");
+// En el estado inicial del usuario, agregar isAdmin si está presente
+const initialUser = JSON.parse(localStorage.getItem('user')) || null;
+
 export const useStore = create((set, get) => ({
-  user: storedUser ? JSON.parse(storedUser) : null,
+  user: initialUser,
   users: mockUsers,
   matches: mockMatches,
   login: (userOrEmail) => {
@@ -244,13 +245,8 @@ export const useStore = create((set, get) => ({
     if (typeof userOrEmail === "string") {
       user = get().users.find((u) => u.email === userOrEmail);
     } else if (userOrEmail && userOrEmail.id) {
-      // Si es un objeto de usuario del backend, normalizar el formato
-      user = {
-        id: userOrEmail.id,
-        name: userOrEmail.nombre || userOrEmail.name,
-        email: userOrEmail.email,
-        avatar: userOrEmail.avatar,
-      };
+      // GUARDAR EL USUARIO COMPLETO DEL BACKEND
+      user = { ...userOrEmail };
     }
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -263,15 +259,9 @@ export const useStore = create((set, get) => ({
   },
   register: (userOrName, email) => {
     let newUser = null;
-    
-    // Si se pasa un objeto de usuario completo (desde Google OAuth)
+    // Si se pasa un objeto de usuario completo (desde Google OAuth o backend)
     if (typeof userOrName === "object" && userOrName.id) {
-      newUser = {
-        id: userOrName.id,
-        name: userOrName.nombre || userOrName.name,
-        email: userOrName.email,
-        avatar: userOrName.avatar,
-      };
+      newUser = { ...userOrName };
     } 
     // Si se pasan parámetros individuales (registro tradicional)
     else if (typeof userOrName === "string" && email) {
@@ -284,7 +274,6 @@ export const useStore = create((set, get) => ({
         )}.jpg`,
       };
     }
-    
     if (newUser) {
       localStorage.setItem("user", JSON.stringify(newUser));
       set((state) => ({ users: [...state.users, newUser], user: newUser }));

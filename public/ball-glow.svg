@@ -1,0 +1,17 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+    <feMerge>
+      <feMergeNode in="coloredBlur"/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  <circle cx="128" cy="128" r="100" fill="#fff" filter="url(#glow)"/>
+  <circle cx="128" cy="128" r="100" fill="none" stroke="#84cc16" stroke-width="12" filter="url(#glow)"/>
+  <!-- Pentágono central -->
+  <polygon points="128,98 144,116 136,138 120,138 112,116" fill="#222"/>
+  <!-- Líneas de paneles -->
+  <polyline points="128,98 128,128" stroke="#84cc16" stroke-width="3"/>
+  <polyline points="128,98 144,116" stroke="#84cc16" stroke-width="3"/>
+  <polyline points="128,98 112,116" stroke="#84cc16" stroke-width="3"/>
+</svg> 

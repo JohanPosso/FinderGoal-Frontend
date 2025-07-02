@@ -6,6 +6,7 @@ import { FaFutbol } from "react-icons/fa"; // For the logo icon
 import { FiUser, FiMail } from "react-icons/fi"; // Icons for input fields
 import { GoogleLogin } from "@react-oauth/google";
 import api from "../utils/axios";
+import { sendWelcomeEmail } from "../utils/emailService";
 
 // Re-using the color configuration from the Sporty & Energetic theme
 const colorsSporty = {
@@ -75,7 +76,19 @@ export default function Register() {
       
       if (response.data && response.data.access_token) {
         localStorage.setItem("token", response.data.access_token);
-        register(response.data.user);
+        register({ ...response.data.user, isAdmin: response.data.user.isAdmin });
+        
+        // Enviar correo de bienvenida solo si es un usuario nuevo
+        if (response.data.isNewUser && response.data.user && response.data.user.email) {
+          const userName = response.data.user.nombre || response.data.user.name || "Jugador";
+          const emailResult = await sendWelcomeEmail(response.data.user.email, userName);
+          if (emailResult.success) {
+            console.log("Correo de bienvenida enviado exitosamente");
+          } else {
+            console.warn("No se pudo enviar el correo de bienvenida:", emailResult.error);
+          }
+        }
+        
         navigate("/dashboard");
       }
     } catch (error) {
@@ -106,10 +119,12 @@ export default function Register() {
       >
         {/* Logo and Title */}
         <div className="flex flex-col items-center mb-8">
-          <FaFutbol
-            className={`text-6xl ${colorsSporty.accentOrangeText} mb-4`}
-          />{" "}
-          {/* Orange accent for register */}
+          <img
+            src="/dark_logo.webp"
+            alt="FinderGoal Logo"
+            className="w-24 h-24 object-contain mb-4 drop-shadow-lg rounded-full"
+            draggable={false}
+          />
           <h2 className="text-4xl font-extrabold text-white text-center tracking-wide">
             Únete a la{" "}
             <span className={colorsSporty.accentOrangeText}>Cancha</span>

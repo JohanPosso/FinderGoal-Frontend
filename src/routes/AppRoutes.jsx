@@ -11,6 +11,8 @@ import Dashboard from "../pages/Dashboard";
 import Field from "../pages/Field";
 import Community from "../pages/Community";
 import WhatsappParser from "../pages/WhatsappParser";
+import EmailSettings from "../pages/EmailSettings";
+import AdminPanel from '../pages/AdminPanel';
 
 // Aquí puedes agregar lógica de rutas protegidas si lo deseas
 
@@ -18,6 +20,14 @@ function PrivateRoute({ children }) {
   const { user } = useStore();
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function PrivateAdminRoute({ children }) {
+  const { user } = useStore();
+  if (!user || !user.isAdmin) {
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 }
@@ -56,6 +66,19 @@ const AppRoutes = () => (
         </PrivateRoute>
       }
     />
+    <Route
+      path="/email-settings"
+      element={
+        <PrivateRoute>
+          <EmailSettings />
+        </PrivateRoute>
+      }
+    />
+    <Route path="/admin" element={
+      <PrivateAdminRoute>
+        <AdminPanel />
+      </PrivateAdminRoute>
+    } />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );

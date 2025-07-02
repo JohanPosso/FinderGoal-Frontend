@@ -1,0 +1,18 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#b9f227" />
+      <stop offset="100%" stop-color="#84cc16" />
+    </radialGradient>
+  </defs>
+  <circle cx="128" cy="128" r="120" fill="url(#bg)" />
+  <!-- Pin de ubicación -->
+  <path d="M128 60c-32 0-58 25-58 56 0 36 44 82 54 92a8 8 0 0 0 12 0c10-10 54-56 54-92 0-31-26-56-58-56z" fill="#fff" stroke="#222" stroke-width="6"/>
+  <!-- Balón de fútbol estilizado -->
+  <circle cx="128" cy="116" r="28" fill="#84cc16" stroke="#222" stroke-width="5"/>
+  <polygon points="128,104 136,120 120,120" fill="#fff" stroke="#222" stroke-width="2"/>
+  <line x1="128" y1="104" x2="128" y2="132" stroke="#222" stroke-width="2"/>
+  <line x1="120" y1="120" x2="136" y2="120" stroke="#222" stroke-width="2"/>
+  <!-- Detalles de balón -->
+  <circle cx="128" cy="116" r="28" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="6 8"/>
+</svg> 

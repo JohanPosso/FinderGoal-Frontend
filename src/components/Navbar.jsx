@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaFutbol } from "react-icons/fa";
 import { motion } from "framer-motion"; // Import motion for animations
-import { FiMenu, FiX, FiLogOut, FiUser } from "react-icons/fi"; // Import icons for mobile menu
+import { FiMenu, FiX, FiLogOut, FiUser, FiMail } from "react-icons/fi"; // Import icons for mobile menu
 import { useStore } from "../store/useStore";
 import { getAvatarUrl } from "../utils/helpers";
 
@@ -102,7 +102,12 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center group">
-          <FaFutbol className="text-3xl text-lime-500 mr-2 group-hover:rotate-12 transition-transform duration-300" />
+          <img
+            src="/dark_logo.webp"
+            alt="FinderGoal Logo"
+            className="w-10 h-10 object-contain mr-2 drop-shadow-lg rounded-full bg-white"
+            draggable={false}
+          />
           <span className="text-2xl font-extrabold text-white">FinderGoal</span>
         </Link>
 
@@ -197,6 +202,14 @@ export default function Navbar() {
                     <span className="font-semibold text-lime-400">
                       {user.name || user.nombre}
                     </span>
+                  </Link>
+                  <Link
+                    to="/email-settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-2 text-gray-300 hover:text-lime-400 transition-colors duration-200"
+                  >
+                    <FiMail className="text-lg" />
+                    <span className="font-medium">Configuración de Correos</span>
                   </Link>
                   <SportyButton
                     variant="outline"

@@ -5,6 +5,7 @@ import { motion } from "framer-motion"; // For subtle animations
 import { FaFutbol } from "react-icons/fa"; // For the logo icon
 import { GoogleLogin } from "@react-oauth/google";
 import api from "../utils/axios";
+import { sendWelcomeEmail } from "../utils/emailService";
 
 // Re-using the color configuration from the Sporty & Energetic theme
 const colorsSporty = {
@@ -49,6 +50,7 @@ export default function Login() {
         const userWithToken = {
           ...res.data.user,
           token,
+          isAdmin: res.data.user.isAdmin
         };
         login(userWithToken);
         navigate("/dashboard");
@@ -78,7 +80,19 @@ export default function Login() {
       
       if (response.data && response.data.access_token) {
         localStorage.setItem("token", response.data.access_token);
-        login(response.data.user);
+        login({ ...response.data.user, isAdmin: response.data.user.isAdmin });
+        
+        // Enviar correo de bienvenida solo si es un usuario nuevo
+        if (response.data.isNewUser && response.data.user && response.data.user.email) {
+          const userName = response.data.user.nombre || response.data.user.name || "Jugador";
+          const emailResult = await sendWelcomeEmail(response.data.user.email, userName);
+          if (emailResult.success) {
+            console.log("Correo de bienvenida enviado exitosamente");
+          } else {
+            console.warn("No se pudo enviar el correo de bienvenida:", emailResult.error);
+          }
+        }
+        
         navigate("/dashboard");
       }
     } catch (error) {
@@ -109,9 +123,14 @@ export default function Login() {
       >
         {/* Logo and Title */}
         <div className="flex flex-col items-center mb-8">
-          <FaFutbol
-            className={`text-6xl ${colorsSporty.accentLimeText} mb-4`}
+          {/* Logo FinderGoal */}
+          <img
+            src={"../../public/dark_logo.webp"}
+            alt="FinderGoal Logo"
+            className="w-24 h-24  mb-4 drop-shadow-lg rounded-full bg-white"
+            draggable={false}
           />
+          
           <h2 className="text-4xl font-extrabold text-white text-center tracking-wide">
             Iniciar <span className={colorsSporty.accentLimeText}>Sesión</span>
           </h2>

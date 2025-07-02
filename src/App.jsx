@@ -1,20 +1,50 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AppRoutes from "./routes/AppRoutes";
+import EmailNotification from "./components/EmailNotification";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [emailNotification, setEmailNotification] = useState({
+    isVisible: false,
+    message: "",
+    type: "success"
+  });
+
+  const showEmailNotification = (message, type = "success") => {
+    setEmailNotification({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  const hideEmailNotification = () => {
+    setEmailNotification(prev => ({
+      ...prev,
+      isVisible: false
+    }));
+  };
 
   return (
     <Router>
-      <Navbar />
-      <AppRoutes />
-      <Footer />
+      <div className="App">
+        <Navbar />
+        <AppRoutes />
+        <Footer />
+        
+        {/* Notificación de correos */}
+        <EmailNotification
+          message={emailNotification.message}
+          type={emailNotification.type}
+          isVisible={emailNotification.isVisible}
+          onClose={hideEmailNotification}
+          autoClose={true}
+          duration={5000}
+        />
+      </div>
     </Router>
   );
 }
