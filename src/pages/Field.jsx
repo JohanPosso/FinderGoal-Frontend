@@ -48,18 +48,12 @@ function FieldCard({ field }) {
       transition={{ duration: 0.3 }}
       className={`${colorsSporty.secondaryBg} rounded-2xl ${colorsSporty.shadowPrimary} border ${colorsSporty.cardBorder} overflow-hidden flex flex-col`}
     >
-      <img
-        src={
-          field.imageUrl || "https://placehold.co/400x250/222/fff?text=Sin+Foto"
-        }
-        alt={field.name}
-        className="w-full h-48 object-cover object-center bg-gray-900"
-      />
+      <div className="flex items-center justify-center py-6 bg-gradient-to-br from-lime-500/10 to-orange-500/10">
+        <FaFutbol className="text-5xl text-lime-400 drop-shadow-lg" />
+      </div>
       <div className="p-6 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-3">
-          <h3
-            className={`text-2xl font-bold ${colorsSporty.primaryText} leading-tight pr-4`}
-          >
+          <h3 className={`text-2xl font-bold ${colorsSporty.primaryText} leading-tight pr-4`}>
             {field.name}
           </h3>
           <div className="flex items-center text-lg">
@@ -73,20 +67,15 @@ function FieldCard({ field }) {
           <FiMapPin className={`mr-2 ${colorsSporty.accentLimeText}`} />
           <span className="truncate">{field.location}</span>
         </div>
-        <div
-          className={`flex items-center ${colorsSporty.secondaryText} text-sm mb-4`}
-        >
+        <div className={`flex items-center ${colorsSporty.secondaryText} text-sm mb-4`}>
           <FaFutbol className={`mr-2 ${colorsSporty.accentOrangeText}`} />
           <span>
             {field.type || "Fútbol"} • {field.surface || "-"}
           </span>
         </div>
-        <p
-          className={`${colorsSporty.secondaryText} text-sm mb-4 line-clamp-2 flex-grow`}
-        >
-          {field.description || "Cancha pública o sugerida por IA."}
+        <p className={`${colorsSporty.secondaryText} text-sm mb-4 line-clamp-2 flex-grow`}>
+          {field.description || "Cancha pública o sugerida por la comunidad."}
         </p>
-        {/* Puedes agregar aquí un enlace a Google Maps si tienes lat/lon */}
       </div>
     </motion.div>
   );

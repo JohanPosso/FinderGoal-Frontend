@@ -80,26 +80,25 @@ const customSelectStyles = {
   }),
   menu: (provided) => ({
     ...provided,
-    backgroundColor: colorsSporty.secondaryBg.replace("bg-", "#"),
+    backgroundColor: "#23272b", // Fondo sólido oscuro
     borderRadius: "0.5rem",
     boxShadow: colorsSporty.shadowPrimary,
-    // CRÍTICO para que se vea por encima:
-    zIndex: 9999, // Asegura que el menú desplegable esté por encima de otros elementos
-    border: `1px solid ${colorsSporty.cardBorder.replace("border-", "#")}`, // Add border to dropdown
+    zIndex: 9999,
+    border: `1px solid ${colorsSporty.cardBorder.replace("border-", "#")}`,
   }),
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isFocused
-      ? colorsSporty.inputBg.replace("bg-", "#") // Lighter dark on focus
+      ? "#2d3238" // Fondo más claro al enfocar
       : state.isSelected
-      ? colorsSporty.accentLimeText.replace("text-", "#") // Lime on select
-      : colorsSporty.secondaryBg.replace("bg-", "#"),
+      ? "#a3e635" // Verde lima para seleccionado
+      : "#23272b", // Fondo sólido oscuro
     color:
       state.isFocused || state.isSelected
         ? colorsSporty.primaryText.replace("text-", "#")
         : colorsSporty.primaryText.replace("text-", "#"),
     "&:active": {
-      backgroundColor: colorsSporty.accentLimeText.replace("text-", "#"),
+      backgroundColor: "#a3e635",
     },
     fontSize: "1rem",
     padding: "0.75rem 1rem",
@@ -166,12 +165,10 @@ export default function CreateMatch() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || !token) {
-      alert("Debes iniciar sesión para crear un partido.");
       navigate("/login");
       return;
     }
     if (!title || !date || !hour || !direccion || !maxPlayers) {
-      alert("Completa todos los campos obligatorios.");
       return;
     }
 
@@ -200,7 +197,6 @@ export default function CreateMatch() {
             Authorization: `Bearer ${token}`,
           },
         });
-        alert("Partido actualizado exitosamente");
       } else {
         // Crear nuevo partido
         res = await api.post("/matches", payload, {
@@ -217,9 +213,6 @@ export default function CreateMatch() {
       navigate(`/matches/${res.data.id}`);
     } catch (err) {
       const action = isEditing ? "actualizar" : "crear";
-      alert(
-        `Error al ${action} el partido. Verifica los datos e inténtalo de nuevo.`
-      );
     }
   };
 
@@ -267,9 +260,6 @@ export default function CreateMatch() {
     if (descripcion) {
       setDescription(descripcion);
     }
-
-    // Mostrar mensaje de éxito
-    alert("¡Datos aplicados exitosamente! Revisa y ajusta la información según sea necesario.");
   };
 
   const fetchMatchData = async (id) => {
@@ -293,7 +283,6 @@ export default function CreateMatch() {
       setSerJugador(matchData.serJugador || matchData.willPlay || false);
     } catch (err) {
       console.error("Error fetching match data:", err);
-      alert("Error al cargar los datos del partido.");
     }
   };
 
@@ -345,7 +334,7 @@ export default function CreateMatch() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
-          {/* Fila 1: Título del partido | Número de jugadores */}
+          {/* Fila 1: Título del partido | Formato de jugadores */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <label
@@ -371,19 +360,20 @@ export default function CreateMatch() {
               <label
                 className={`block text-md md:text-lg font-semibold ${colorsSporty.primaryText} mb-2`}
               >
-                Número de jugadores <span className="text-red-500">*</span>
+                Formato de jugadores <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <input
-                  type="number"
-                  min={5}
-                  max={22}
-                  className={`w-full px-4 py-3 md:py-4 rounded-lg ${colorsSporty.inputBg} ${colorsSporty.primaryText} ${colorsSporty.inputBorder} border-2 focus:outline-none ${colorsSporty.inputFocusRing} transition-all duration-200 placeholder-gray-400 font-medium`}
-                  placeholder="10"
+                <select
+                  className={`w-full px-4 py-3 md:py-4 rounded-lg ${colorsSporty.inputBg} ${colorsSporty.primaryText} ${colorsSporty.inputBorder} border-2 focus:outline-none ${colorsSporty.inputFocusRing} transition-all duration-200 font-medium`}
                   value={maxPlayers}
                   onChange={(e) => setMaxPlayers(Number(e.target.value))}
                   required
-                />
+                >
+                  <option value={10}>5 vs 5 (10 jugadores)</option>
+                  <option value={14}>7 vs 7 (14 jugadores)</option>
+                  <option value={18}>9 vs 9 (18 jugadores)</option>
+                  <option value={22}>11 vs 11 (22 jugadores)</option>
+                </select>
                 <FiUsers
                   className={`absolute right-3 top-1/2 -translate-y-1/2 text-lg md:text-xl ${colorsSporty.secondaryText}`}
                 />
@@ -548,20 +538,6 @@ export default function CreateMatch() {
                 Se generará un código privado para compartir con tus invitados.
               </span>
             )}
-          </div>
-
-          {/* Botón de WhatsApp Parser */}
-          <div className="pt-4">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-              onClick={() => setShowWhatsappParser(true)}
-              className={`w-full ${colorsSporty.accentOrange} hover:${colorsSporty.accentOrangeHover} ${colorsSporty.primaryText} py-3 md:py-4 rounded-lg font-bold transition-all duration-300 text-lg md:text-xl shadow-lg flex items-center justify-center mb-4`}
-            >
-              <FiClipboard className="mr-3 text-2xl md:text-3xl" /> 
-              Pegar Listado de WhatsApp
-            </motion.button>
           </div>
 
           <div className="pt-4">

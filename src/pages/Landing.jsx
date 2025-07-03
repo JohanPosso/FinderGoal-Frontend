@@ -22,7 +22,7 @@ import {
 } from "../utils/geolocation";
 import { useLocationStore, useStore } from "../store/useStore";
 import api from "../utils/axios";
-import Driver from "driver.js";
+import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { landingTourSteps } from "../config/tourConfig";
 
@@ -420,7 +420,7 @@ export default function SportyEnergeticLanding() {
     },
     {
       name: "Jesus Posso",
-      avatar: "https://johanposso.com/images/IMG_76972.webp",
+      avatar: "../../public/jesus_image.webp",
       text: "Organizar partidos ahora es tan fácil que mis amigos me eligieron como la capitana del grupo. ¡Gracias por simplificar todo!",
       role: "CEO",
     },
@@ -440,9 +440,10 @@ export default function SportyEnergeticLanding() {
 
   useEffect(() => {
     if (!localStorage.getItem("tourLandingShown")) {
-      const driver = new Driver();
-      driver.defineSteps(landingTourSteps);
-      driver.start();
+      const driverInstance = new driver({
+        steps: landingTourSteps,
+      });
+      driverInstance.drive();
       localStorage.setItem("tourLandingShown", "true");
     }
   }, []);
@@ -495,7 +496,7 @@ export default function SportyEnergeticLanding() {
               className="flex flex-col sm:flex-row gap-5 mb-14 justify-center md:justify-start"
             >
               <Link to="/matches">
-                <SportyButton className="flex items-center gap-2">
+                <SportyButton className="flex items-center gap-2" id="buscar-partidos-btn">
                   <FaFutbol className="text-xl" /> Buscar Partidos
                 </SportyButton>
               </Link>
