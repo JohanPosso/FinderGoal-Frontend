@@ -20,7 +20,11 @@ import {
   getCityCountryFromCoords,
   getCityCountryFromIP,
 } from "../utils/geolocation";
-import { useLocationStore } from "../store/useStore";
+import { useLocationStore, useStore } from "../store/useStore";
+import api from "../utils/axios";
+import Driver from "driver.js";
+import "driver.js/dist/driver.css";
+import { landingTourSteps } from "../config/tourConfig";
 
 // Configuración de colores para Diseño Deportivo y Energético
 const colorsSporty = {
@@ -102,7 +106,7 @@ const SportyTestimonial = ({ name, avatar, text, role }) => (
   </motion.div>
 );
 
-const SportyMatchCard = ({ date, location, players, maxPlayers }) => (
+const SportyMatchCard = ({ title, date, location, players, maxPlayers }) => (
   <div
     className={`${colorsSporty.cardBg} rounded-2xl overflow-hidden shadow-xl transition-transform hover:scale-[1.02] ${colorsSporty.cardBorder} border-b-4 border-lime-500`}
   >
@@ -279,6 +283,10 @@ export default function SportyEnergeticLanding() {
   const [selectedCountry, setSelectedCountry] = useState("España");
   const [loadingLocation, setLoadingLocation] = useState(true);
   const setLocation = useLocationStore((state) => state.setLocation);
+  const { matches } = useStore();
+  const [apiMatches, setApiMatches] = useState([]);
+  const [loadingMatches, setLoadingMatches] = useState(true);
+  const [errorMatches, setErrorMatches] = useState("");
 
   useEffect(() => {
     const getUserGeoLocation = async () => {
@@ -346,32 +354,62 @@ export default function SportyEnergeticLanding() {
     getUserGeoLocation();
   }, []);
 
-  const upcomingMatches = [
-    {
-      date: "Hoy, 18:00",
-      location: `Cancha La Bombonera, ${selectedCity}`,
-      players: 8,
-      maxPlayers: 10,
-    },
-    {
-      date: "Mañana, 20:00",
-      location: `Polideportivo Central, ${selectedCity}`,
-      players: 5,
-      maxPlayers: 12,
-    },
-    {
-      date: "Sábado, 16:00",
-      location: `Parque Deportivo, ${selectedCity}`,
-      players: 10,
-      maxPlayers: 14,
-    },
-    {
-      date: "Domingo, 11:00",
-      location: `Complejo Los Ángeles, ${selectedCity}`,
-      players: 6,
-      maxPlayers: 10,
-    },
-  ];
+  useEffect(() => {
+    const fetchMatches = async () => {
+      setLoadingMatches(true);
+      setErrorMatches("");
+      try {
+        const res = await api.get("/matches");
+        setApiMatches(res.data);
+      } catch (err) {
+        setErrorMatches("No se pudieron cargar los partidos.");
+      } finally {
+        setLoadingMatches(false);
+      }
+    };
+    fetchMatches();
+  }, []);
+
+  // Obtener los 4 últimos partidos agregados desde la API
+  const latestMatches = apiMatches
+    .sort((a, b) => new Date(b.createdAt || b.fecha || b.date) - new Date(a.createdAt || a.fecha || a.date))
+    .slice(0, 4)
+    .map((m) => {
+      // Combinar fecha y hora en formato legible
+      let fechaHora = m.fecha;
+      if (m.hora) {
+        fechaHora += ` ${m.hora}`;
+      }
+      let fechaLegible = "";
+      if (m.fecha && m.hora) {
+        const fechaObj = new Date(`${m.fecha}T${m.hora}`);
+        fechaLegible = fechaObj.toLocaleString("es-ES", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      } else if (m.fecha) {
+        const fechaObj = new Date(m.fecha);
+        fechaLegible = fechaObj.toLocaleDateString("es-ES", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        });
+      } else {
+        fechaLegible = "Próximamente";
+      }
+      // Calcular total de jugadores
+      const totalJugadores = (Array.isArray(m.jugadores) ? m.jugadores.length : 0) + (Array.isArray(m.jugadoresInvitados) ? m.jugadoresInvitados.length : 0);
+      return {
+        title: m.titulo || m.title || "Partido de fútbol",
+        date: fechaLegible,
+        location: m.direccion || m.ubicacion || m.location || "Ubicación no especificada",
+        players: totalJugadores,
+        maxPlayers: m.maxPlayers,
+      };
+    });
 
   const testimonials = [
     {
@@ -382,7 +420,7 @@ export default function SportyEnergeticLanding() {
     },
     {
       name: "Jesus Posso",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+      avatar: "https://johanposso.com/images/IMG_76972.webp",
       text: "Organizar partidos ahora es tan fácil que mis amigos me eligieron como la capitana del grupo. ¡Gracias por simplificar todo!",
       role: "CEO",
     },
@@ -399,6 +437,15 @@ export default function SportyEnergeticLanding() {
       role: "Árbitro ocasional",
     },
   ];
+
+  useEffect(() => {
+    if (!localStorage.getItem("tourLandingShown")) {
+      const driver = new Driver();
+      driver.defineSteps(landingTourSteps);
+      driver.start();
+      localStorage.setItem("tourLandingShown", "true");
+    }
+  }, []);
 
   return (
     <div
@@ -456,6 +503,7 @@ export default function SportyEnergeticLanding() {
                 <SportyButton
                   variant="secondary"
                   className="flex items-center gap-2"
+                  id="crear-partido-btn"
                 >
                   <FiUserPlus className="text-xl" /> Crear Partido
                 </SportyButton>
@@ -608,11 +656,19 @@ export default function SportyEnergeticLanding() {
             }}
             className="pb-16"
           >
-            {upcomingMatches.map((match, i) => (
-              <SwiperSlide key={i}>
-                <SportyMatchCard {...match} />
-              </SwiperSlide>
-            ))}
+            {loadingMatches ? (
+              <div className="text-center text-white py-10">Cargando partidos...</div>
+            ) : errorMatches ? (
+              <div className="text-center text-red-400 py-10">{errorMatches}</div>
+            ) : latestMatches.length === 0 ? (
+              <div className="text-center text-gray-300 py-10">No hay partidos recientes.</div>
+            ) : (
+              latestMatches.map((match, i) => (
+                <SwiperSlide key={i}>
+                  <SportyMatchCard {...match} />
+                </SwiperSlide>
+              ))
+            )}
           </Swiper>
         </div>
       </section>

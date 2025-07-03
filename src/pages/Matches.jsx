@@ -7,6 +7,9 @@ import { FiCalendar, FiMapPin, FiUsers, FiPlus } from "react-icons/fi";
 import { FaFutbol } from "react-icons/fa";
 import { motion } from "framer-motion"; // For subtle animations
 import api from "../utils/axios";
+import { matchesTourSteps } from "../config/tourConfig";
+// import Driver from "driver.js";
+// import "driver.js/dist/driver.css";
 
 // Re-using the color configuration from the Sporty & Energetic landing page
 const colorsSporty = {
@@ -64,6 +67,15 @@ export default function Matches() {
 
     fetchMatches();
   }, []); // Empty dependency array means this effect runs once on mount
+
+  // React.useEffect(() => {
+  //   if (!localStorage.getItem("tourMatchesShown")) {
+  //     const driver = new Driver();
+  //     driver.defineSteps(matchesTourSteps);
+  //     driver.start();
+  //     localStorage.setItem("tourMatchesShown", "true");
+  //   }
+  // }, []);
 
   return (
     <div
@@ -140,17 +152,16 @@ export default function Matches() {
                 className={`block ${colorsSporty.cardBg} rounded-2xl ${colorsSporty.shadowPrimary} hover:shadow-2xl transition p-7 border ${colorsSporty.cardBorder} border-b-4 border-lime-500`}
               >
                 <Link to={`/matches/${match.id}`} className="block">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-extrabold ${colorsSporty.primaryText} truncate pr-4 leading-tight">
+                  <div className="mb-4">
+                    <h2 className="text-xl font-extrabold text-white truncate pr-4 leading-tight">
                       {match.titulo || match.nombre || "Partido sin título"}
                     </h2>
-                    <span
-                      className={`text-xs ${colorsSporty.accentOrange} px-3 py-1.5 rounded-full font-bold uppercase`}
-                    >
-                      {/* Mostrar fecha y hora como string, sin crear Date para la hora */}
-                      {format(parseISO(match.fecha), "dd MMM", { locale: es })},{" "}
-                      {match.hora}
-                    </span>
+                    <div className="flex items-center mt-2">
+                      <FiCalendar className="mr-2 text-lime-400" />
+                      <span className="text-sm font-semibold text-orange-300 bg-gray-700 px-3 py-1 rounded-full">
+                        {format(parseISO(match.fecha), "dd MMM", { locale: es })} {match.hora}
+                      </span>
+                    </div>
                   </div>
                   <div
                     className={`flex items-center ${colorsSporty.secondaryText} mb-2 text-lg`}

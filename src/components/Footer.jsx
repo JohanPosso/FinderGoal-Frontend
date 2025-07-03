@@ -90,7 +90,7 @@ export default function Footer() {
           <ul className="space-y-3 text-gray-400">
             <li className="flex items-center">
               <span className="mr-2 text-lime-500 text-lg">📧</span>{" "}
-              info@futbolconnect.com
+              info@findergoal.com
             </li>
             <li className="flex items-center">
               <span className="mr-2 text-lime-500 text-lg">📞</span> +34 123 456
@@ -106,7 +106,7 @@ export default function Footer() {
 
       {/* Copyright */}
       <div className="border-t border-gray-800 mt-16 pt-8 text-center text-gray-500 text-sm">
-        © {currentYear} FútbolConnect. Todos los derechos reservados. Diseñado
+        © {currentYear} FinderGoal. Todos los derechos reservados. Diseñado
         para campeones.
       </div>
     </footer>

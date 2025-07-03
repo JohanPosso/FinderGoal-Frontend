@@ -97,6 +97,7 @@ export default function Navbar() {
 
   return (
     <nav
+      id="navbar"
       className={`${colorsSporty.primaryBg} ${colorsSporty.primaryText} shadow-lg py-4 px-6 relative z-50`}
     >
       <div className="max-w-6xl mx-auto flex justify-between items-center">
