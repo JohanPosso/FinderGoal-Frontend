@@ -14,6 +14,5 @@ export const validateAuthConfig = () => {
     return false;
   }
   
-  console.log("✅ Google OAuth configurado correctamente");
   return true;
 }; 

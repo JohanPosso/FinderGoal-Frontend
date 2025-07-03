@@ -13,6 +13,7 @@ import {
   FiStar,
   FiCopy,
   FiDollarSign, // Added for price icon
+  FiX,
 } from "react-icons/fi";
 import { FaFutbol, FaRegStar, FaStar } from "react-icons/fa";
 import { getAvatarUrl } from "../utils/helpers";
@@ -139,6 +140,7 @@ export default function MatchDetail() {
   const [codigoError, setCodigoError] = useState("");
   const [joinLoading, setJoinLoading] = useState(false);
   const [copied, setCopied] = useState(false); // State for copy feedback
+  const navigate = useNavigate();
 
   // Effect to fetch match data from the API
   React.useEffect(() => {
@@ -164,6 +166,7 @@ export default function MatchDetail() {
           skillLevel: apiMatch.skillLevel,
           codigoPrivado: apiMatch.codigoPrivado,
           jugadoresInvitados: apiMatch.jugadoresInvitados,
+          jugadoresReserva: apiMatch.jugadoresReserva,
         });
         setLoading(false);
       } catch (err) {
@@ -262,11 +265,9 @@ export default function MatchDetail() {
 
   const handleJoin = async () => {
     if (!user) {
-      alert("Debes iniciar sesión para unirte a un partido.");
       return;
     }
     if (match.players.some((player) => player.id === user.id)) {
-      alert("Ya estás unido a este partido.");
       return;
     }
     if (joinLoading) return;
@@ -302,6 +303,7 @@ export default function MatchDetail() {
         skillLevel: apiMatch.skillLevel,
         codigoPrivado: apiMatch.codigoPrivado,
         jugadoresInvitados: apiMatch.jugadoresInvitados,
+        jugadoresReserva: apiMatch.jugadoresReserva,
       });
       setCodigoInput("");
       setCodigoError(""); // Clear error on successful join
@@ -312,6 +314,95 @@ export default function MatchDetail() {
       } else {
         setCodigoError("No se pudo unir al partido. Inténtalo de nuevo.");
       }
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
+  // Nueva función para unirse a la lista de espera
+  const handleJoinWaitlist = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (joinLoading) return;
+    setJoinLoading(true);
+    try {
+      // Usar el mismo endpoint que handleJoin, pero con waitlist: true
+      const response = await api.post(
+        `/matches/${match.id}/join`,
+        {
+          userId: user.id,
+          waitlist: true,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // Actualiza el estado local para reflejar la reserva
+      const apiMatch = response.data;
+      setMatch({
+        id: apiMatch.id,
+        title: apiMatch.titulo,
+        fecha: apiMatch.fecha,
+        hora: apiMatch.hora,
+        location: apiMatch.direccion,
+        creator: apiMatch.creador,
+        players: apiMatch.jugadores,
+        maxPlayers: apiMatch.maxPlayers,
+        description: apiMatch.descripcion,
+        price: apiMatch.precio,
+        status: apiMatch.estado,
+        isPrivate: apiMatch.privado,
+        skillLevel: apiMatch.skillLevel,
+        codigoPrivado: apiMatch.codigoPrivado,
+        jugadoresInvitados: apiMatch.jugadoresInvitados,
+        jugadoresReserva: apiMatch.jugadoresReserva,
+      });
+    } catch (err) {
+    } finally {
+      setJoinLoading(false);
+    }
+  };
+
+  // Nueva función para salirse del partido o reserva
+  const handleLeaveMatch = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setJoinLoading(true);
+    try {
+      const response = await api.post(`/matches/${match.id}/leave`, {
+        userId: user.id,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const apiMatch = response.data;
+      setMatch({
+        id: apiMatch.id,
+        title: apiMatch.titulo,
+        fecha: apiMatch.fecha,
+        hora: apiMatch.hora,
+        location: apiMatch.direccion,
+        creator: apiMatch.creador,
+        players: apiMatch.jugadores,
+        maxPlayers: apiMatch.maxPlayers,
+        description: apiMatch.descripcion,
+        price: apiMatch.precio,
+        status: apiMatch.estado,
+        isPrivate: apiMatch.privado,
+        skillLevel: apiMatch.skillLevel,
+        codigoPrivado: apiMatch.codigoPrivado,
+        jugadoresInvitados: apiMatch.jugadoresInvitados,
+        jugadoresReserva: apiMatch.jugadoresReserva,
+      });
+    } catch (err) {
+      // Manejo de error opcional
     } finally {
       setJoinLoading(false);
     }
@@ -422,7 +513,7 @@ export default function MatchDetail() {
                 <h3 className="text-2xl font-bold text-white mb-3">
                   Descripción
                 </h3>
-                <p className={`${colorsSporty.secondaryText} leading-relaxed`}>
+                <p className={`${colorsSporty.secondaryText} leading-relaxed`} style={{ whiteSpace: 'pre-line' }}>
                   {match.description}
                 </p>
               </div>
@@ -455,18 +546,33 @@ export default function MatchDetail() {
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.1 + idx * 0.05 }}
-                          className="flex flex-col items-center text-center"
+                          className="flex flex-col items-center text-center relative group"
                         >
                           <img
-                            src={
-                              player.avatar || getAvatarUrl()
-                            }
+                            src={player.avatar || getAvatarUrl()}
                             alt={player.nombre || "Jugador"}
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-lime-500 shadow-md"
                           />
                           <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText} max-w-full truncate`}>
                             {player?.nombre ? player.nombre.split(" ")[0] : typeof player === 'string' ? player.split(" ")[0] : "Vacío"}
                           </span>
+                          {/* Botón salir solo para el usuario en sesión */}
+                          {player.id === user?.id && (
+                            <div
+                              className="absolute -top-2 -right-2 z-10 flex items-center justify-center"
+                              style={{ width: 24, height: 24 }}
+                            >
+                              <button
+                                onClick={handleLeaveMatch}
+                                title="Salir del partido"
+                                className="bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 text-xs shadow group-hover:opacity-100 opacity-80 transition-opacity flex items-center justify-center"
+                                style={{ width: 20, height: 20 }}
+                                disabled={joinLoading}
+                              >
+                                <FiX size={11} />
+                              </button>
+                            </div>
+                          )}
                         </motion.div>
                       ))}
                       {/* Placeholder para cupos vacíos en Equipo 1 */}
@@ -500,18 +606,33 @@ export default function MatchDetail() {
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: 0.1 + idx * 0.05 }}
-                          className="flex flex-col items-center text-center"
+                          className="flex flex-col items-center text-center relative group"
                         >
                           <img
-                            src={
-                              player.avatar || getAvatarUrl()
-                            }
+                            src={player.avatar || getAvatarUrl()}
                             alt={player.nombre || "Jugador"}
                             className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-orange-500 shadow-md"
                           />
                           <span className={`text-xs mt-1 font-semibold ${colorsSporty.primaryText} max-w-full truncate`}>
                             {player?.nombre ? player.nombre.split(" ")[0] : typeof player === 'string' ? player.split(" ")[0] : "Vacío"}
                           </span>
+                          {/* Botón salir solo para el usuario en sesión */}
+                          {player.id === user?.id && (
+                            <div
+                              className="absolute -top-2 -right-2 z-10 flex items-center justify-center"
+                              style={{ width: 24, height: 24 }}
+                            >
+                              <button
+                                onClick={handleLeaveMatch}
+                                title="Salir del partido"
+                                className="bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 text-xs shadow group-hover:opacity-100 opacity-80 transition-opacity flex items-center justify-center"
+                                style={{ width: 20, height: 20 }}
+                                disabled={joinLoading}
+                              >
+                                <FiX size={11} />
+                              </button>
+                            </div>
+                          )}
                         </motion.div>
                       ))}
                       {/* Placeholder para cupos vacíos en Equipo 2 */}
@@ -530,6 +651,55 @@ export default function MatchDetail() {
             </div>
             {/* FIN - Sección de Jugadores Inscritos con visualización de equipos (ADAPTADO DEL DISEÑO 2) */}
 
+            {/* Lista de Reserva */}
+            {Array.isArray(match.jugadoresReserva) && match.jugadoresReserva.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-10 mb-8 p-6 rounded-2xl border-2 border-orange-400 bg-gray-900 shadow-lg"
+              >
+                <h3 className="text-2xl font-extrabold text-orange-400 mb-4 flex items-center gap-2">
+                  <FiUsers className="text-orange-400 text-2xl" /> Lista de Reserva
+                </h3>
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-44 overflow-y-auto pr-2 scrollbar-none justify-items-center items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  {match.jugadoresReserva.map((reserva, idx) => (
+                    <div key={reserva.id || reserva.nombre || idx} className="flex flex-col items-center relative group">
+                      <div className="relative">
+                        <img
+                          src={reserva.avatar || getAvatarUrl()}
+                          alt={reserva.nombre || 'Reserva'}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-orange-400 shadow-md"
+                        />
+                        <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg border border-orange-700">Reserva</span>
+                        {/* Botón salir solo para el usuario en sesión */}
+                        {reserva.id === user?.id && (
+                          <div
+                            className="absolute -top-2 -right-2 z-10 flex items-center justify-center"
+                            style={{ width: 24, height: 24 }}
+                          >
+                            <button
+                              onClick={handleLeaveMatch}
+                              title="Salir de la reserva"
+                              className="bg-red-600 hover:bg-red-700 text-white rounded-full p-0.5 text-xs shadow group-hover:opacity-100 opacity-80 transition-opacity flex items-center justify-center"
+                              style={{ width: 20, height: 20 }}
+                              disabled={joinLoading}
+                            >
+                              <FiX size={11} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <span className="mt-1 text-xs font-semibold text-orange-200 max-w-full truncate text-center">
+                        {reserva.id === user?.id
+                          ? (user.name?.split(' ')[0] || user.nombre?.split(' ')[0] || user.name || user.nombre || 'Tú')
+                          : (reserva.name?.split(' ')[0] || reserva.nombre?.split(' ')[0] || reserva.name || reserva.nombre || 'Invitado')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {match.isPrivate && isCreator && (
               <motion.div // Added motion for this section
@@ -640,16 +810,31 @@ export default function MatchDetail() {
                 </motion.p>
               )}
 
-              {isFull && !isCreator && !match.players.some((player) => player.id === user?.id) && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
-                  className={`${colorsSporty.secondaryText} text-center mt-8 text-lg bg-red-700 p-3 rounded-lg font-bold text-white`}
-                >
-                  ¡Uy! Este partido está <span className="font-bold text-white">lleno</span>. ¡No te desanimes, busca otros o únete a la lista de espera!
-                </motion.p>
-              )}
+              {isFull && !isCreator && !match.players.some((player) => player.id === user?.id) &&
+                // Oculta el mensaje si el usuario ya está en la lista de reserva
+                !(Array.isArray(match.jugadoresReserva) && match.jugadoresReserva.some(reserva => reserva.id === user?.id)) && (
+                  <>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.7 }}
+                      className={`${colorsSporty.secondaryText} text-center mt-8 text-lg bg-red-700 p-3 rounded-lg font-bold text-white`}
+                    >
+                      ¡Uy! Este partido está <span className="font-bold text-white">lleno</span>. ¡No te desanimes, busca otros o únete a la lista de espera!
+                    </motion.p>
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`mx-auto mt-4 flex items-center gap-2 px-5 py-2 rounded-full font-bold text-base uppercase tracking-wide transition-all duration-300 ${colorsSporty.accentOrange} hover:${colorsSporty.accentOrangeHover} shadow-md ${joinLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      style={{ minWidth: 'unset', maxWidth: 260 }}
+                      onClick={handleJoinWaitlist}
+                      disabled={joinLoading}
+                    >
+                      <FiUsers className="text-lg mr-1" />
+                      {joinLoading ? "Uniéndote..." : "Unirme a la reserva"}
+                    </motion.button>
+                  </>
+                )}
 
               {match.players.some((player) => player.id === user?.id) && !isCreator && (
                 <motion.p
