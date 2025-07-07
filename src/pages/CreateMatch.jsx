@@ -131,6 +131,7 @@ const skillLevelsOptions = [
   { value: "medium", label: "Intermedio" },
   { value: "advanced", label: "Avanzado" },
   { value: "competitive", label: "Competitivo" },
+  { value: "pro", label: "Profesional" },
 ];
 
 export default function CreateMatch() {
