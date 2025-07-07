@@ -22,6 +22,7 @@ import {
 import { FaFutbol } from "react-icons/fa"; // For general sports theme
 import api from "../utils/axios";
 import { getAvatarUrl, getRegistrationDate } from "../utils/helpers";
+import { createPortal } from "react-dom";
 
 // Re-using the color configuration from the Sporty & Energetic theme
 const colorsSporty = {
@@ -143,6 +144,94 @@ function MatchCard({ match, onView, onEdit, onDelete, user, isPastMatch }) {
   );
 }
 
+// --- Modal de edición de perfil ---
+function EditProfileModal({
+  isOpen,
+  onClose,
+  userData,
+  editNombre,
+  setEditNombre,
+  editEmail,
+  setEditEmail,
+  editAvatar,
+  setEditAvatar,
+  onSubmit,
+  error,
+  uploading,
+  onFileChange,
+  previewUrl,
+}) {
+  if (!isOpen) return null;
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+      <div className="bg-gray-900 rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-2 animate-fadeIn">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-2xl font-bold focus:outline-none"
+          aria-label="Cerrar"
+        >
+          ×
+        </button>
+        <h2 className="text-2xl font-bold mb-6 text-white text-center">Editar Perfil</h2>
+        <form onSubmit={onSubmit}>
+          <div className="flex flex-col items-center mb-6">
+            <div className="relative mb-2">
+              <img
+                src={previewUrl || editAvatar || getAvatarUrl(userData?.avatar)}
+                alt="Avatar preview"
+                className="w-24 h-24 rounded-full object-cover border-4 border-lime-500 shadow-lg"
+              />
+              <label className="absolute bottom-0 right-0 bg-lime-500 text-gray-900 rounded-full p-2 cursor-pointer shadow-md hover:bg-lime-400 transition-all border-2 border-white">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={onFileChange}
+                  disabled={uploading}
+                />
+                <FiEdit />
+              </label>
+            </div>
+            <span className="text-xs text-gray-400">Haz clic en el lápiz para cambiar la foto</span>
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-300 mb-2">Nombre</label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-lime-500"
+              value={editNombre}
+              onChange={(e) => setEditNombre(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-300 mb-2">Correo electrónico</label>
+            <input
+              type="email"
+              className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-lime-500"
+              value={editEmail}
+              onChange={(e) => setEditEmail(e.target.value)}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className={`w-full mt-4 ${colorsSporty.accentLime} hover:${colorsSporty.accentLimeHover} text-lg font-bold py-3 rounded-lg transition-all duration-300 flex items-center justify-center`}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <span className="animate-spin mr-2">⏳</span>
+            ) : null}
+            Guardar Cambios
+          </button>
+          {error && <p className="text-red-400 mt-4 text-center">{error}</p>}
+        </form>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // --- Main Component: ProfileDashboard ---
 export default function ProfileDashboard() {
   const { user, matches, logout, deleteMatch, updateUser } = useStore();
@@ -162,6 +251,10 @@ export default function ProfileDashboard() {
   const [myMatches, setMyMatches] = useState([]);
   const [loadingMyMatches, setLoadingMyMatches] = useState(false);
   const [errorMyMatches, setErrorMyMatches] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [profileUpdateStatus, setProfileUpdateStatus] = useState(""); // "success" | "error" | ""
 
   // Usar directamente el usuario del estado global
   useEffect(() => {
@@ -273,12 +366,43 @@ export default function ProfileDashboard() {
         avatar: editAvatar || null,
       });
       setUserData(res.data);
-      setEditMode(false);
       if (res.data) {
         updateUser(res.data); // Actualiza el usuario global y localStorage
+        setShowEditModal(false);
+        setProfileUpdateStatus("success");
+        setTimeout(() => setProfileUpdateStatus(""), 3500);
       }
     } catch (err) {
       setError("No se pudo actualizar el perfil.");
+      setProfileUpdateStatus("error");
+      setTimeout(() => setProfileUpdateStatus(""), 3500);
+    }
+  };
+
+  // Manejar cambio de archivo de imagen
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    // Previsualización local
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+    // Subir al backend
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await api.post("/upload/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setEditAvatar(res.data.url); // Guardar la URL recibida
+    } catch (err) {
+      setError("No se pudo subir la imagen. Intenta con otra.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -379,6 +503,37 @@ export default function ProfileDashboard() {
     <div
       className={`${colorsSporty.primaryBg} min-h-screen py-10 px-6 ${colorsSporty.primaryText}`}
     >
+      {/* Notificación de guardado de perfil */}
+      {profileUpdateStatus === "success" && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] bg-lime-500 text-gray-900 px-6 py-3 rounded-xl shadow-lg font-bold text-lg animate-fadeIn">
+          Perfil actualizado correctamente
+        </div>
+      )}
+      {profileUpdateStatus === "error" && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg font-bold text-lg animate-fadeIn">
+          No se pudo actualizar el perfil
+        </div>
+      )}
+      <EditProfileModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setPreviewUrl("");
+          setError("");
+        }}
+        userData={userData}
+        editNombre={editNombre}
+        setEditNombre={setEditNombre}
+        editEmail={editEmail}
+        setEditEmail={setEditEmail}
+        editAvatar={editAvatar}
+        setEditAvatar={setEditAvatar}
+        onSubmit={handleUpdate}
+        error={error}
+        uploading={uploading}
+        onFileChange={handleFileChange}
+        previewUrl={previewUrl}
+      />
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <motion.div
@@ -432,11 +587,10 @@ export default function ProfileDashboard() {
               </Link>
             )}
             <button
-              onClick={() => setEditMode((v) => !v)}
+              onClick={() => setShowEditModal(true)}
               className={`inline-flex items-center px-4 py-3 rounded-lg font-bold uppercase tracking-wide transition-all duration-300 ${colorsSporty.accentOrange} hover:${colorsSporty.accentOrangeHover}`}
             >
-              <FiEdit className="mr-2" />{" "}
-              {editMode ? "Cancelar" : "Editar Perfil"}
+              <FiEdit className="mr-2" /> Editar Perfil
             </button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -484,59 +638,6 @@ export default function ProfileDashboard() {
             <span className="bg-gray-700 text-gray-400 px-4 py-2 rounded-full font-semibold text-sm shadow">Organizador</span>
           </div>
         </div>
-
-        {/* Formulario de edición */}
-        {editMode && (
-          <form
-            onSubmit={handleUpdate}
-            className="mb-10 bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 max-w-lg mx-auto"
-          >
-            <h2 className="text-2xl font-bold mb-6 text-white">
-              Editar Perfil
-            </h2>
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Nombre</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-lime-500"
-                value={editNombre}
-                onChange={(e) => setEditNombre(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">
-                Correo electrónico
-              </label>
-              <input
-                type="email"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-lime-500"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">
-                Foto de perfil (URL)
-              </label>
-              <input
-                type="url"
-                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-lime-500"
-                value={editAvatar}
-                onChange={(e) => setEditAvatar(e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <button
-              type="submit"
-              className={`w-full mt-4 ${colorsSporty.accentLime} hover:${colorsSporty.accentLimeHover} text-lg font-bold py-3 rounded-lg transition-all duration-300`}
-            >
-              Guardar Cambios
-            </button>
-            {error && <p className="text-red-400 mt-4">{error}</p>}
-          </form>
-        )}
 
         {/* Navigation Tabs */}
         <motion.div
@@ -654,19 +755,6 @@ export default function ProfileDashboard() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* --- Botón de acceso a Admin (solo para admins) --- */}
-        {user?.isAdmin && (
-          <div className="flex justify-end mb-6">
-            <Link
-              to="/admin"
-              className="inline-flex items-center px-6 py-3 rounded-lg font-bold uppercase tracking-wide bg-gradient-to-r from-lime-500 to-green-500 text-gray-900 shadow-lg hover:from-lime-400 hover:to-green-400 transition-all duration-300 text-lg gap-3"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0-1.104.896-2 2-2s2 .896 2 2-.896 2-2 2-2-.896-2-2zm0 0V7m0 4v4m0 0c0 1.104-.896 2-2 2s-2-.896-2-2 .896-2 2-2 2 .896 2 2z" /></svg>
-              Panel Admin
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   );

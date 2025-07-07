@@ -420,7 +420,7 @@ export default function SportyEnergeticLanding() {
     },
     {
       name: "Jesus Posso",
-      avatar: "../../public/jesus_image.webp",
+      avatar: "/jesus_image.webp",
       text: "Organizar partidos ahora es tan fácil que mis amigos me eligieron como la capitana del grupo. ¡Gracias por simplificar todo!",
       role: "CEO",
     },
