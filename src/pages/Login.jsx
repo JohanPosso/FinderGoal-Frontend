@@ -125,7 +125,7 @@ export default function Login() {
         <div className="flex flex-col items-center mb-8">
           {/* Logo FinderGoal */}
           <img
-            src={"../../public/dark_logo.webp"}
+            src={"/dark_logo.webp"}
             alt="FinderGoal Logo"
             className="w-24 h-24  mb-4 drop-shadow-lg rounded-full bg-white"
             draggable={false}
