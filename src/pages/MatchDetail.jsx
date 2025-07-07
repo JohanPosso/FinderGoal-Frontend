@@ -14,6 +14,8 @@ import {
   FiCopy,
   FiDollarSign, // Added for price icon
   FiX,
+  FiInfo,
+  FiLock,
 } from "react-icons/fi";
 import { FaFutbol, FaRegStar, FaStar } from "react-icons/fa";
 import { getAvatarUrl } from "../utils/helpers";
@@ -273,12 +275,16 @@ export default function MatchDetail() {
     if (joinLoading) return;
     setJoinLoading(true);
     try {
+      const isUserCreator = user && match.creator && match.creator.id === user.id;
+      const joinPayload = {
+        userId: user.id,
+      };
+      if (match.isPrivate && !isUserCreator) {
+        joinPayload.codigoPrivado = codigoInput;
+      }
       const response = await api.post(
         `/matches/${match.id}/join`,
-        {
-          userId: user.id,
-          codigoPrivado: match.isPrivate ? codigoInput : undefined,
-        },
+        joinPayload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -437,16 +443,6 @@ export default function MatchDetail() {
                 <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-2 leading-tight">
                   {match.title}
                 </h1>
-                {match.isPrivate && (
-                  <span className="inline-block bg-orange-600 text-white text-sm px-3 py-1 rounded-full font-bold uppercase">
-                    Privado
-                  </span>
-                )}
-                {!match.isPrivate && ( // Added public badge
-                  <span className="inline-block bg-lime-600 text-gray-900 text-sm px-3 py-1 rounded-full font-bold uppercase">
-                    Público
-                  </span>
-                )}
               </div>
               <Link
                 to="/matches"
@@ -456,68 +452,100 @@ export default function MatchDetail() {
               </Link>
             </div>
 
-            {/* Match Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="flex items-center">
-                <FiCalendar className={`${colorsSporty.accentLimeText} mr-3 text-xl`} />
-                <div>
-                  <p className={`${colorsSporty.secondaryText} text-sm`}>Fecha</p>
-                  <p className={`${colorsSporty.primaryText} font-semibold`}>
-                    {dateBadge}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <FiMapPin className={`${colorsSporty.accentLimeText} mr-3 text-xl`} />
-                <div>
-                  <p className={`${colorsSporty.secondaryText} text-sm`}>Ubicación</p>
-                  <p className={`${colorsSporty.primaryText} font-semibold`}>
-                    {match.location}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <FiUsers className={`${colorsSporty.accentLimeText} mr-3 text-xl`} />
-                <div>
-                  <p className={`${colorsSporty.secondaryText} text-sm`}>Jugadores</p>
-                  <p className={`${colorsSporty.primaryText} font-semibold`}>
-                    {plazasOcupadas}/{maxPlayersTotal}
-                  </p>
-                </div>
-              </div>
-
-              {match.price > 0 && (
-                <div className="flex items-center">
-                  <FaFutbol className={`${colorsSporty.accentLimeText} mr-3 text-xl`} />
-                  <div>
-                    <p className={`${colorsSporty.secondaryText} text-sm`}>Precio</p>
-                    <p className={`${colorsSporty.primaryText} font-semibold`}>
-                      ${match.price.toLocaleString('es-CO')} por jugador
-                    </p>
+            {/* NUEVO DISEÑO TARJETA HORIZONTAL - Datos principales del partido */}
+            <div className="relative max-w-4xl w-full bg-gray-900 rounded-2xl shadow-xl p-4 sm:p-6 mb-8">
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 md:divide-x divide-gray-700">
+                {/* Columna 1 */}
+                {/* Fecha */}
+                <li className="flex items-center gap-4 py-4">
+                  <div className="bg-lime-700/30 rounded-full p-3">
+                    <FiCalendar className="text-lime-400 text-2xl" />
                   </div>
-                </div>
-              )}
-               {match.skillLevel && (
-                 <div className="flex items-center">
-                   <FiStar className={`${colorsSporty.accentLimeText} mr-3 text-xl`} />
-                   <SkillLevel level={match.skillLevel} />
-                 </div>
-               )}
+                  <div>
+                    <div className="text-xs text-gray-400">Fecha</div>
+                    <div className="font-bold text-lg">{dateBadge}</div>
+                  </div>
+                </li>
+                {/* Columna 2 */}
+                {/* Ubicación */}
+                <li className="flex items-center gap-4 py-4">
+                  <div className="bg-lime-700/30 rounded-full p-3">
+                    <FiMapPin className="text-lime-400 text-2xl" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Ubicación</div>
+                    <div className="font-bold text-lg">{match.location}</div>
+                  </div>
+                </li>
+                {/* Columna 1 */}
+                {/* Jugadores */}
+                <li className="flex items-center gap-4 py-4">
+                  <div className="bg-lime-700/30 rounded-full p-3">
+                    <FiUsers className="text-lime-400 text-2xl" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400">Jugadores</div>
+                    <div className="font-bold text-lg">{plazasOcupadas}/{maxPlayersTotal}</div>
+                  </div>
+                </li>
+                {/* Columna 2 */}
+                {/* Precio */}
+                {match.price > 0 ? (
+                  <li className="flex items-center gap-4 py-4">
+                    <div className="bg-lime-700/30 rounded-full p-3">
+                      <FaFutbol className="text-lime-400 text-2xl" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400">Precio</div>
+                      <div className="font-bold text-lg">${match.price.toLocaleString('es-CO')} por jugador</div>
+                    </div>
+                  </li>
+                ) : (
+                  <li></li>
+                )}
+                {/* Columna 1 */}
+                {/* Acceso (Privado/Público) */}
+                <li className="flex items-center gap-4 py-4">
+                  <div className={`rounded-full p-3 mt-1 ${match.isPrivate ? 'bg-orange-600/30' : 'bg-lime-600/30'}`}> 
+                    <FiLock className={`text-2xl ${match.isPrivate ? 'text-orange-400' : 'text-lime-400'}`} />
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-400 mb-1">Acceso</div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${match.isPrivate ? 'bg-orange-600 text-white' : 'bg-lime-600 text-gray-900'}`}>{match.isPrivate ? 'Privado' : 'Público'}</span>
+                  </div>
+                </li>
+                {/* Columna 2 */}
+                {/* Nivel */}
+                {match.skillLevel ? (
+                  <li className="flex items-center gap-4 py-4">
+                    <div className="bg-lime-700/30 rounded-full p-3">
+                      <FiStar className="text-lime-400 text-2xl" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400">Nivel</div>
+                      <SkillLevel level={match.skillLevel} />
+                    </div>
+                  </li>
+                ) : (
+                  <li></li>
+                )}
+                {/* Descripción (abajo, ambas columnas) */}
+                {match.description && (
+                  <li className="md:col-span-2 flex items-start gap-4 py-4">
+                    <div className="bg-lime-700/30 rounded-full p-3 mt-1">
+                      <FiInfo className="text-lime-400 text-2xl" />
+                    </div>
+                    <div className="w-full">
+                      <div className="text-xs text-gray-400 mb-1">Descripción</div>
+                      <div className="text-gray-200 leading-relaxed whitespace-pre-line max-h-40 overflow-y-auto scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                        {match.description}
+                      </div>
+                    </div>
+                  </li>
+                )}
+              </ul>
             </div>
-
-            {/* Match Description */}
-            {match.description && (
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-white mb-3">
-                  Descripción
-                </h3>
-                <p className={`${colorsSporty.secondaryText} leading-relaxed`} style={{ whiteSpace: 'pre-line' }}>
-                  {match.description}
-                </p>
-              </div>
-            )}
+            {/* FIN NUEVO DISEÑO TARJETA HORIZONTAL */}
 
             {/* INICIO - Sección de Jugadores Inscritos con visualización de equipos (ADAPTADO DEL DISEÑO 2) */}
             <div className="mt-8">
@@ -539,7 +567,7 @@ export default function MatchDetail() {
                       <span className="text-sm sm:text-base">Equipo 1 ({team1.length}/{playersPerTeam})</span>
                     </h4>
                     {/* Grid responsive para jugadores */}
-                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto scrollbar-none w-full justify-items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       {team1.map((player, idx) => (
                         <motion.div
                           key={player.id || player.nombre || idx}
@@ -599,7 +627,7 @@ export default function MatchDetail() {
                       <span className="text-sm sm:text-base">Equipo 2 ({team2.length}/{playersPerTeam})</span>
                     </h4>
                     {/* Grid responsive para jugadores */}
-                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto custom-scrollbar w-full justify-items-center">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 gap-2 sm:gap-3 max-h-40 sm:max-h-48 overflow-y-auto scrollbar-none w-full justify-items-center" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                       {team2.map((player, idx) => (
                         <motion.div
                           key={player.id || player.nombre || idx}
@@ -717,10 +745,16 @@ export default function MatchDetail() {
                   </span>
                   <button
                     onClick={handleCopyCode}
-                    className={`p-3 rounded-lg ${copied ? 'bg-green-500' : colorsSporty.accentLime} ${copied ? 'text-white' : colorsSporty.accentLimeText} font-bold transition-all duration-200`}
+                    className={`p-3 rounded-lg font-bold transition-all duration-200 ${
+                      copied
+                        ? 'bg-green-500 text-white'
+                        : colorsSporty.accentLime
+                    }`}
                     title="Copiar código"
                   >
-                    {copied ? <FaRegCheckCircle size={20} /> : <FiCopy size={20} />}
+                    {copied
+                      ? <FaRegCheckCircle size={20} className="text-white" />
+                      : <FiCopy size={20} className="text-gray-900" />}
                   </button>
                 </div>
                 <span className="text-sm text-gray-400 mt-2">
