@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://findergoal.com/sitemap.xml
+
+# Disallow admin and private routes
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /create-match
+Disallow: /email-settings
+
+# Allow public pages
+Allow: /
+Allow: /matches
+Allow: /fields
+Allow: /community
+Allow: /whatsapp-parser
+Allow: /login
+Allow: /register
+
+# Crawl delay (optional)
+Crawl-delay: 1 
