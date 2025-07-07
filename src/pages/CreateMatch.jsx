@@ -24,6 +24,17 @@ import Select from "react-select";
 import api from "../utils/axios";
 import WhatsappParser from "../components/WhatsappParser";
 
+// Función helper para Google Analytics
+const trackEvent = (action, category, label, value) => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', action, {
+      event_category: category,
+      event_label: label,
+      value: value
+    });
+  }
+};
+
 // Colores del tema Sporty & Energetic
 const colorsSporty = {
   primaryBg: "bg-gray-900", // Fondo oscuro principal
@@ -198,6 +209,9 @@ export default function CreateMatch() {
             Authorization: `Bearer ${token}`,
           },
         });
+        
+        // Track evento de edición de partido
+        trackEvent('match_updated', 'match_management', 'edit_match', matchId);
       } else {
         // Crear nuevo partido
         res = await api.post("/matches", payload, {
@@ -205,9 +219,21 @@ export default function CreateMatch() {
             Authorization: `Bearer ${token}`,
           },
         });
+        
+        // Track evento de creación de partido
+        trackEvent('match_created', 'match_management', 'create_match', res.data.id);
+        
+        // Track detalles adicionales del partido creado
+        trackEvent('match_details', 'match_management', 'match_type', isPrivate ? 'private' : 'public');
+        trackEvent('match_details', 'match_management', 'skill_level', skillLevel);
+        trackEvent('match_details', 'match_management', 'max_players', maxPlayers);
+        trackEvent('match_details', 'match_management', 'has_price', precio > 0 ? 'yes' : 'no');
+        
         if (res.data.privado && res.data.codigoPrivado) {
           setCodigoPrivado(res.data.codigoPrivado);
           setShowModal(true);
+          // Track evento de creación de partido privado
+          trackEvent('private_match_created', 'match_management', 'private_match', res.data.id);
         }
       }
       
@@ -219,6 +245,9 @@ export default function CreateMatch() {
 
   // Función para manejar los datos extraídos del parser de WhatsApp
   const handleWhatsappDataExtracted = (data) => {
+    // Track evento de uso del parser de WhatsApp
+    trackEvent('whatsapp_parser_used', 'match_creation', 'parse_whatsapp', 1);
+    
     // Aplicar fecha si está disponible
     if (data.fecha) {
       const fechaParts = data.fecha.split('-');
@@ -565,7 +594,11 @@ export default function CreateMatch() {
             <div className="flex items-center justify-center gap-2 mb-4">
               <span className="text-3xl font-mono bg-gray-800 px-4 py-2 rounded-lg border border-lime-500 text-lime-400 select-all">{codigoPrivado}</span>
               <button
-                onClick={() => {navigator.clipboard.writeText(codigoPrivado)}}
+                onClick={() => {
+                  navigator.clipboard.writeText(codigoPrivado);
+                  // Track evento de copia de código privado
+                  trackEvent('private_code_copied', 'match_management', 'copy_code', 1);
+                }}
                 className="ml-2 p-2 rounded-lg bg-lime-500 hover:bg-lime-400 text-gray-900 font-bold"
                 title="Copiar código"
               >
@@ -586,7 +619,11 @@ export default function CreateMatch() {
       {showWhatsappParser && (
         <WhatsappParser
           onDataExtracted={handleWhatsappDataExtracted}
-          onClose={() => setShowWhatsappParser(false)}
+          onClose={() => {
+            setShowWhatsappParser(false);
+            // Track evento cuando se cierra el parser
+            trackEvent('whatsapp_parser_closed', 'match_creation', 'close_parser', 1);
+          }}
         />
       )}
     </motion.div>
