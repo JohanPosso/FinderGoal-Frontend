@@ -47,6 +47,7 @@ export default function WhatsappParserPage() {
   const [error, setError] = useState("");
   const [isValid, setIsValid] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [maxPlayersAdjusted, setMaxPlayersAdjusted] = useState(false);
   const navigate = useNavigate();
 
   const handleTextChange = (e) => {
@@ -69,6 +70,16 @@ export default function WhatsappParserPage() {
     }
   };
 
+  const deduceTipoFutbol = (jugadores) => {
+    if (!Array.isArray(jugadores)) return '';
+    const n = jugadores.length;
+    if (n >= 20) return '11v11';
+    if (n >= 16 && n <= 19) return '9v9';
+    if (n >= 12 && n <= 15) return '7v7';
+    if (n >= 10 && n <= 11) return '5v5';
+    return '';
+  };
+
   const handleProcess = async () => {
     if (!isValid) {
       setError("El texto no parece ser un listado válido de WhatsApp.");
@@ -80,7 +91,12 @@ export default function WhatsappParserPage() {
 
     try {
       const cleanedText = cleanWhatsappText(whatsappText);
-      const data = await parseWhatsappList(cleanedText);
+      let data = await parseWhatsappList(cleanedText);
+      // Si no hay tipoFutbol, deducirlo automáticamente
+      if (!data.tipoFutbol || data.tipoFutbol.trim() === '') {
+        const deducido = deduceTipoFutbol(data.jugadores);
+        data = { ...data, tipoFutbol: deducido };
+      }
       setExtractedData(data);
     } catch (err) {
       setError(err.message || "Error procesando el listado.");
@@ -89,8 +105,36 @@ export default function WhatsappParserPage() {
     }
   };
 
+  const getMaxPlayersFromTipoFutbol = (tipoFutbol, jugadores) => {
+    if (tipoFutbol) {
+      const match = tipoFutbol.match(/(\d+)\s*[vx-]\s*(\d+)/i);
+      if (match) {
+        const n1 = parseInt(match[1], 10);
+        const n2 = parseInt(match[2], 10);
+        return n1 + n2;
+      }
+      // Si solo hay un número (ej: "Fútbol 7"), asumir dobles equipos
+      const single = tipoFutbol.match(/(\d+)/);
+      if (single) {
+        return parseInt(single[1], 10) * 2;
+      }
+    }
+    // Si no hay tipoFutbol, deducir por cantidad de jugadores
+    if (Array.isArray(jugadores) && jugadores.length > 0) {
+      if (jugadores.length % 2 === 1) {
+        return jugadores.length + 1; // Siguiente par
+      }
+      return jugadores.length;
+    }
+    return 12;
+  };
+
   const handleCreateMatch = async () => {
     if (!extractedData) return;
+
+    // Deducir el máximo de jugadores según el tipo de fútbol o cantidad de jugadores
+    const jugadoresMaximos = getMaxPlayersFromTipoFutbol(extractedData.tipoFutbol, extractedData.jugadores);
+    setMaxPlayersAdjusted(!extractedData.tipoFutbol && Array.isArray(extractedData.jugadores) && extractedData.jugadores.length % 2 === 1);
 
     // Armar el payload según lo que espera el endpoint
     const payload = {
@@ -116,8 +160,9 @@ export default function WhatsappParserPage() {
           ? new Date(`${extractedData.fecha}T18:00`).toISOString()
           : null,
       ubicacion: extractedData.ubicacion || "",
-      jugadoresMaximos: extractedData.jugadores?.length || 12,
+      jugadoresMaximos,
       notas: (extractedData.tipoFutbol ? `Tipo: ${extractedData.tipoFutbol}. ` : "") + (extractedData.notas || ""),
+      precio: extractedData.precio || 0,
       jugadoresInvitados: extractedData.jugadores || []
     };
 
@@ -143,6 +188,26 @@ export default function WhatsappParserPage() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Mapeo de códigos de moneda a símbolos
+  const currencySymbol = (moneda) => {
+    if (!moneda) return '';
+    const map = {
+      'EUR': '€',
+      'USD': '$',
+      'COP': '$',
+      'MXN': '$',
+      'ARS': '$',
+      'CLP': '$',
+      'BRL': 'R$',
+      'GBP': '£',
+      '€': '€',
+      '$': '$',
+      '£': '£',
+      'R$': 'R$'
+    };
+    return map[moneda] || moneda;
   };
 
   return (
@@ -346,8 +411,13 @@ export default function WhatsappParserPage() {
                     <FiDollarSign className={`text-xl ${colorsSporty.accentLimeText} mb-1`} />
                     <p className="text-sm text-gray-400">Precio</p>
                     <p className="text-white font-semibold">
-                      ${extractedData.precio?.toLocaleString() || '0'} COP
+                      {extractedData.precio
+                        ? `${currencySymbol(extractedData.moneda)}${extractedData.precio.toLocaleString()}${extractedData.moneda && !['€', '$', '£', 'R$'].includes(currencySymbol(extractedData.moneda)) ? ' ' + extractedData.moneda : ''}`
+                        : 'No especificado'}
                     </p>
+                    {extractedData.detallePrecio && (
+                      <p className="text-xs text-gray-300 mt-1">{extractedData.detallePrecio}</p>
+                    )}
                   </div>
                 </div>
 
@@ -390,17 +460,6 @@ export default function WhatsappParserPage() {
                     <FiPlus className="mr-2" />
                     Crear Partido
                   </motion.button>
-                  
-                  <Link to="/create-match">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="py-3 px-6 rounded-lg font-bold transition-all duration-300 bg-gray-600 hover:bg-gray-500 text-white flex items-center"
-                    >
-                      <FiArrowRight className="mr-2" />
-                      Ir a Crear
-                    </motion.button>
-                  </Link>
                 </div>
 
                 {copied && (
@@ -411,6 +470,11 @@ export default function WhatsappParserPage() {
                   >
                     ¡Lista de jugadores copiada al portapapeles!
                   </motion.div>
+                )}
+                {maxPlayersAdjusted && (
+                  <div className="p-3 bg-yellow-900/20 border border-yellow-500 rounded-lg my-4 text-yellow-300 text-sm">
+                    El tipo de fútbol no se detectó en el texto. Se ajustó el máximo de jugadores a {extractedData.jugadores.length + 1} para dejar un cupo libre y completar equipos.
+                  </div>
                 )}
               </motion.div>
             )}
