@@ -22,9 +22,6 @@ import {
 } from "../utils/geolocation";
 import { useLocationStore, useStore } from "../store/useStore";
 import api from "../utils/axios";
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
-import { landingTourSteps } from "../config/tourConfig";
 
 // Configuración de colores para Diseño Deportivo y Energético
 const colorsSporty = {
@@ -440,10 +437,11 @@ export default function SportyEnergeticLanding() {
 
   useEffect(() => {
     if (!localStorage.getItem("tourLandingShown")) {
-      const driverInstance = new driver({
-        steps: landingTourSteps,
-      });
-      driverInstance.drive();
+      // Eliminar las siguientes líneas
+      // const driverInstance = new driver({
+      //   steps: landingTourSteps,
+      // });
+      // driverInstance.drive();
       localStorage.setItem("tourLandingShown", "true");
     }
   }, []);
@@ -458,7 +456,7 @@ export default function SportyEnergeticLanding() {
           className="absolute inset-0 bg-cover bg-center opacity-10"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1579952962645-a773d42e2b86?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
+              "url('https://images.unsplash.com/photo-1579952962645-a773d42e2b86?auto=format&fit=crop&w=800&q=60')",
           }}
         ></div>
         <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-black opacity-90"></div>
@@ -542,10 +540,11 @@ export default function SportyEnergeticLanding() {
                 <div className="relative rounded-[2rem] shadow-2xl shadow-lime-900/30 overflow-hidden border-4 border-lime-400/30 bg-gradient-to-br from-gray-900 to-gray-800">
                   {/* Imagen con parallax */}
                   <motion.img
-                    src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1896&q=80"
+                    src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=60"
                     alt="Partido de fútbol emocionante"
                     className="w-full h-auto object-cover aspect-video scale-110 group-hover:scale-100 transition-transform duration-700"
                     whileHover={{ scale: 1.05 }}
+                    loading="lazy"
                   />
 
                   {/* Overlay de efecto vidrio */}

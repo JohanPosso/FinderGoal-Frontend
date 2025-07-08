@@ -7,9 +7,6 @@ import { FiCalendar, FiMapPin, FiUsers, FiPlus } from "react-icons/fi";
 import { FaFutbol } from "react-icons/fa";
 import { motion } from "framer-motion"; // For subtle animations
 import api from "../utils/axios";
-import { matchesTourSteps } from "../config/tourConfig";
-// import Driver from "driver.js";
-// import "driver.js/dist/driver.css";
 
 // Re-using the color configuration from the Sporty & Energetic landing page
 const colorsSporty = {
@@ -67,15 +64,6 @@ export default function Matches() {
 
     fetchMatches();
   }, []); // Empty dependency array means this effect runs once on mount
-
-  // React.useEffect(() => {
-  //   if (!localStorage.getItem("tourMatchesShown")) {
-  //     const driver = new Driver();
-  //     driver.defineSteps(matchesTourSteps);
-  //     driver.start();
-  //     localStorage.setItem("tourMatchesShown", "true");
-  //   }
-  // }, []);
 
   return (
     <div

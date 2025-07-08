@@ -92,10 +92,9 @@ export default function Footer() {
               <span className="mr-2 text-lime-500 text-lg">📧</span>{" "}
               info@findergoal.com
             </li>
-            <li className="flex items-center">
-              <span className="mr-2 text-lime-500 text-lg">📞</span> +34 123 456
-              789
-            </li>
+            {/* <li className="flex items-center">
+              <span className="mr-2 text-lime-500 text-lg">📞</span> +34 123 456 789
+            </li> */}
             <li className="flex items-center">
               <span className="mr-2 text-lime-500 text-lg">📍</span> Valladolid,
               España
