@@ -243,6 +243,16 @@ export default function MatchDetail() {
     );
   }
 
+  // Extraer detalle de precio y moneda de la descripción/notas si existen
+  let detallePrecio = '';
+  let moneda = '';
+  if (match.description) {
+    const precioMatch = match.description.match(/Precio: ([^\.]+)\./i);
+    if (precioMatch) detallePrecio = precioMatch[1].trim();
+    const monedaMatch = match.description.match(/Moneda: ([^\.]+)\./i);
+    if (monedaMatch) moneda = monedaMatch[1].trim();
+  }
+
   // Obtener la lista de jugadores: reales y luego invitados
   const jugadoresInvitados = match.jugadoresInvitados || [];
   const jugadoresReales = match.players || [];
@@ -497,7 +507,12 @@ export default function MatchDetail() {
                     </div>
                     <div>
                       <div className="text-xs text-gray-400">Precio</div>
-                      <div className="font-bold text-lg">${match.price.toLocaleString('es-CO')} por jugador</div>
+                      <div className="font-bold text-lg">
+                        {match.price.toLocaleString()} por jugador
+                      </div>
+                      {detallePrecio && (
+                        <div className="text-xs text-gray-300 mt-1">{detallePrecio}</div>
+                      )}
                     </div>
                   </li>
                 ) : (

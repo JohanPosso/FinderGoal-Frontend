@@ -7,10 +7,14 @@
  * @returns {Promise<Object>} - Objeto con información del partido y lista de jugadores
  */
 export async function parseWhatsappList(whatsappText) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "YOUR_GEMINI_API_KEY_HERE";
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
   
-  const prompt = `Analiza este listado de WhatsApp de un partido de fútbol y extrae la información en formato JSON. 
+  const prompt = `Analiza este listado o texto de WhatsApp de un partido de fútbol y extrae la información en formato JSON.
+
+El texto puede venir en cualquier formato, orden o estilo (listado numerado, con guiones, frases, mezclado, etc). Extrae la información aunque el listado no sea estructurado y aunque los datos estén dispersos o mezclados en el texto. Busca siempre la información relevante para crear el partido.
+
+Detecta la moneda exactamente como aparece en el texto (€, $, COP, USD, etc). Si ves el símbolo €, la moneda debe ser EUR.
 
 TEXTO DEL LISTADO:
 ${whatsappText}
@@ -19,9 +23,11 @@ Extrae la siguiente información:
 1. Fecha del partido (en formato YYYY-MM-DD)
 2. Hora del partido (en formato HH:MM)
 3. Ubicación/cancha
-4. Tipo de fútbol (5v5, 7v7, 11v11, etc.)
-5. Precio por persona
+4. Tipo de fútbol (5v5, 7v7, 9v9, 11v11, etc.)
+5. Precio por persona (devuelve el número, la moneda detectada y el texto completo de la línea de precio)
 6. Lista de jugadores confirmados (solo nombres, sin números ni ✅)
+
+IMPORTANTE: Si el año no está explícito en el texto, asume que es 2025.
 
 Devuelve la respuesta en formato JSON con esta estructura:
 {
@@ -30,6 +36,8 @@ Devuelve la respuesta en formato JSON con esta estructura:
   "ubicacion": "texto de la ubicación",
   "tipoFutbol": "texto del tipo",
   "precio": número,
+  "moneda": "COP|USD|EUR|...",
+  "detallePrecio": "texto completo de la línea de precio",
   "jugadores": ["nombre1", "nombre2", "nombre3", ...]
 }
 
@@ -55,12 +63,31 @@ Si no encuentras alguna información, usa null para ese campo.`;
       const parsedData = JSON.parse(jsonMatch[0]);
       
       // Validar y limpiar los datos
+      // Si la fecha tiene año 2024, reemplazarlo por 2025
+      let fecha = parsedData.fecha || null;
+      if (fecha && /^2024-/.test(fecha)) {
+        fecha = fecha.replace(/^2024-/, '2025-');
+      }
+      let moneda = parsedData.moneda || '';
+      const detallePrecio = parsedData.detallePrecio || '';
+      // Refuerzo: si el detallePrecio contiene '€', 'euros' o 'eur', forzar moneda a 'EUR'
+      const detalleLower = detallePrecio.toLowerCase();
+      if (
+        detallePrecio.includes('€') ||
+        detalleLower.includes('euros') ||
+        detalleLower.includes('eur') ||
+        (detallePrecio.includes('$') && (detalleLower.includes('euros') || detalleLower.includes('eur')))
+      ) {
+        moneda = 'EUR';
+      }
       return {
-        fecha: parsedData.fecha || null,
+        fecha,
         hora: parsedData.hora || null,
         ubicacion: parsedData.ubicacion || "",
         tipoFutbol: parsedData.tipoFutbol || "",
         precio: parsedData.precio || 0,
+        moneda,
+        detallePrecio,
         jugadores: Array.isArray(parsedData.jugadores) ? parsedData.jugadores : []
       };
     }

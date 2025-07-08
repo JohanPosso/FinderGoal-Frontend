@@ -421,7 +421,7 @@ export default function SportyEnergeticLanding() {
     {
       name: "Jesus Posso",
       avatar: "/jesus_image.webp",
-      text: "Organizar partidos ahora es tan fácil que mis amigos me eligieron como la capitana del grupo. ¡Gracias por simplificar todo!",
+      text: "En FinderGoal, creemos que organizar y disfrutar del fútbol debe ser fácil para todos. Por eso creamos una plataforma que conecta, simplifica y une a los verdaderos apasionados del juego.",
       role: "CEO",
     },
     {
