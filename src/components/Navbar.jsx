@@ -163,6 +163,7 @@ export default function Navbar() {
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="text-white text-3xl"
+            aria-label={isMobileMenuOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
           >
             {isMobileMenuOpen ? <FiX /> : <FiMenu />}
           </button>
@@ -203,14 +204,6 @@ export default function Navbar() {
                     <span className="font-semibold text-lime-400">
                       {user.name || user.nombre}
                     </span>
-                  </Link>
-                  <Link
-                    to="/email-settings"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-2 text-gray-300 hover:text-lime-400 transition-colors duration-200"
-                  >
-                    <FiMail className="text-lg" />
-                    <span className="font-medium">Configuración de Correos</span>
                   </Link>
                   <SportyButton
                     variant="outline"

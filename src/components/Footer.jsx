@@ -59,7 +59,10 @@ export default function Footer() {
 
         {/* Quick Links */}
         <div>
-          <h4 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider">
+          <h3 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider md:hidden">
+            Enlaces Rápidos
+          </h3>
+          <h4 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider hidden md:block">
             Enlaces Rápidos
           </h4>
           <ul className="space-y-3">
@@ -72,7 +75,10 @@ export default function Footer() {
 
         {/* Legal Section */}
         <div>
-          <h4 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider">
+          <h3 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider md:hidden">
+            Legal
+          </h3>
+          <h4 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider hidden md:block">
             Legal
           </h4>
           <ul className="space-y-3">
@@ -84,7 +90,10 @@ export default function Footer() {
 
         {/* Contact Section */}
         <div>
-          <h4 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider">
+          <h3 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider md:hidden">
+            Contáctanos
+          </h3>
+          <h4 className="font-bold text-xl mb-6 text-lime-400 uppercase tracking-wider hidden md:block">
             Contáctanos
           </h4>
           <ul className="space-y-3 text-gray-400">

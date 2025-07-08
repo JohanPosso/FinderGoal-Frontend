@@ -94,11 +94,11 @@ const AppRoutes = () => (
       </PrivateRoute>
     } />
     <Route path="/email-settings" element={
-      <PrivateRoute>
+      <PrivateAdminRoute>
         <Suspense fallback={<div>Cargando...</div>}>
           <EmailSettings />
         </Suspense>
-      </PrivateRoute>
+      </PrivateAdminRoute>
     } />
     <Route path="/admin" element={
       <PrivateAdminRoute>

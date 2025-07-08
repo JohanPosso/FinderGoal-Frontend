@@ -130,8 +130,8 @@ const SportyMatchCard = ({ title, date, location, players, maxPlayers }) => (
             {players}/{maxPlayers} jugadores
           </span>
         </div>
-        <span className="bg-orange-600 text-white text-sm px-3 py-1.5 rounded-full font-bold">
-          ¡Únete ya!
+        <span className="bg-orange-700 text-white text-sm px-3 py-1.5 rounded-full font-bold md:bg-orange-600">
+          UNIRSE AL PARTIDO
         </span>
       </div>
       <div className="h-40 bg-gray-900 rounded-lg mb-4 flex items-center justify-center border border-gray-700">
@@ -491,17 +491,17 @@ export default function SportyEnergeticLanding() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.4, ease: "easeOut" }}
-              className="flex flex-col sm:flex-row gap-5 mb-14 justify-center md:justify-start"
+              className="flex flex-col gap-4 mb-14 items-center w-full sm:flex-row sm:gap-5 sm:justify-center md:justify-start"
             >
-              <Link to="/matches">
-                <SportyButton className="flex items-center gap-2" id="buscar-partidos-btn">
+              <Link to="/matches" className="w-full sm:w-auto">
+                <SportyButton className="flex items-center gap-2 w-full sm:w-auto justify-center" id="buscar-partidos-btn">
                   <FaFutbol className="text-xl" /> Buscar Partidos
                 </SportyButton>
               </Link>
-              <Link to="/create-match">
+              <Link to="/create-match" className="w-full sm:w-auto">
                 <SportyButton
                   variant="secondary"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-full sm:w-auto justify-center"
                   id="crear-partido-btn"
                 >
                   <FiUserPlus className="text-xl" /> Crear Partido
@@ -860,6 +860,8 @@ export default function SportyEnergeticLanding() {
           </div>
         </div>
       </section>
+
+     
     </div>
   );
 }
