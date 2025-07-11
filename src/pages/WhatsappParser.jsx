@@ -162,7 +162,7 @@ export default function WhatsappParserPage() {
       ubicacion: extractedData.ubicacion || "",
       jugadoresMaximos,
       notas: (extractedData.tipoFutbol ? `Tipo: ${extractedData.tipoFutbol}. ` : "") + (extractedData.notas || ""),
-      precio: extractedData.precio || 0,
+      precio: typeof extractedData.precio === 'string' ? parseFloat(extractedData.precio) || 0 : (extractedData.precio || 0),
       jugadoresInvitados: extractedData.jugadores || []
     };
 
