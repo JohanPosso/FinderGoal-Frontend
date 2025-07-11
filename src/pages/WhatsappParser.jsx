@@ -140,7 +140,6 @@ export default function WhatsappParserPage() {
     const payload = {
       nombre: extractedData.titulo || extractedData.nombre || 
         (() => {
-          // Generar un título descriptivo basado en los datos extraídos
           let titulo = "Partido de Fútbol";
           if (extractedData.fecha) {
             const fecha = new Date(extractedData.fecha);
@@ -162,7 +161,7 @@ export default function WhatsappParserPage() {
       ubicacion: extractedData.ubicacion || "",
       jugadoresMaximos,
       notas: (extractedData.tipoFutbol ? `Tipo: ${extractedData.tipoFutbol}. ` : "") + (extractedData.notas || ""),
-      precio: typeof extractedData.precio === 'string' ? parseFloat(extractedData.precio) || 0 : (extractedData.precio || 0),
+      precio: typeof extractedData.precio === 'string' ? parseFloat(extractedData.precio.replace(',', '.')) || 0 : (extractedData.precio || 0),
       jugadoresInvitados: extractedData.jugadores || []
     };
 
